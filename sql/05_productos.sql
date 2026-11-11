@@ -1,5 +1,4 @@
--- Pregunta 5 - Ranking de productos por rentabilidad
-
+-- Pregunta 5 - Ranking de productos
 USE dbex_DEscalera;
 
 WITH prod AS (
@@ -23,18 +22,17 @@ ranked AS (
     margen_pct,
     RANK() OVER (PARTITION BY category ORDER BY ganancia DESC) AS rank_ganancia_cat,
     DENSE_RANK() OVER (ORDER BY ventas DESC) AS dense_rank_ventas_global,
-    RANK() OVER (PARTITION BY category ORDER BY margen_pct ASC) AS rank_peor_margen_cat,
-    SUM(ganancia) OVER (PARTITION BY category ORDER BY ganancia DESC
-      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ganancia_acum_cat
+    SUM(ganancia) OVER (
+      PARTITION BY category ORDER BY ganancia DESC
+      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS ganancia_acum_cat
   FROM prod
 )
--- Top 5 por ganancia dentro de cada categoria
 SELECT *
 FROM ranked
 WHERE rank_ganancia_cat <= 5
 ORDER BY category, rank_ganancia_cat;
 
--- Top 5 por volumen de ventas (global)
 SELECT
   category,
   product_id,
@@ -58,15 +56,13 @@ FROM (
 WHERE dense_rank_ventas_global <= 5
 ORDER BY dense_rank_ventas_global;
 
--- 5 productos con menor rentabilidad (margen)
 SELECT
   category,
   product_id,
   product_name,
   ventas,
   ganancia,
-  margen_pct,
-  RANK() OVER (ORDER BY margen_pct ASC) AS rank_peor_margen
+  margen_pct
 FROM (
   SELECT
     category,

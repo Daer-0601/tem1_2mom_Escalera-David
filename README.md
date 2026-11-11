@@ -70,29 +70,31 @@ datos/                        CSV listo para Hive
 sql/                          DDL/DML + consultas P1..P8
 scripts/                      preparación y ejecución
 evidencia/                    salidas Beeline + capturas
-documentacion/                resultados, optimización, conclusiones, informe Word
+documentacion/                preguntas 01-08, optimización, conclusiones, informe Word
 diccionario_datos.md
 README.md
 ```
 
-## Base y tabla
+## Base y tablas
 
 - Base: `dbex_DEscalera`
-- Tabla: `superstore_DEscalera`
+- Landing: `stg_superstore` (TEXTFILE)
+- Analítica: `superstore_DEscalera` (ORC)
+- Particionada (opt): `superstore_part` por `anio`
 - Registros cargados: **9994**
 
 ## Preguntas
 
-| # | Tema | Script |
-|---|---|---|
-| 1 | Modelo + carga | `sql/01_ddl_carga.sql` |
-| 2 | Calidad / integridad | `sql/02_calidad.sql` |
-| 3 | Evolución por región | `sql/03_region.sql` |
-| 4 | RFM clientes | `sql/04_rfm.sql` |
-| 5 | Ranking productos | `sql/05_productos.sql` |
-| 6 | Impacto descuentos | `sql/06_descuentos.sql` |
-| 7 | Tendencias mensuales | `sql/07_tendencias.sql` |
-| 8 | Pareto 80/20 | `sql/08_pareto.sql` |
+| # | Tema | Script | Doc |
+|---|---|---|---|
+| 1 | Modelo + carga | `sql/01_ddl_carga.sql` | `documentacion/pregunta-01.md` |
+| 2 | Calidad / integridad | `sql/02_calidad.sql` | `documentacion/pregunta-02.md` |
+| 3 | Evolución por región | `sql/03_region.sql` | `documentacion/pregunta-03.md` |
+| 4 | RFM clientes | `sql/04_rfm.sql` | `documentacion/pregunta-04.md` |
+| 5 | Ranking productos | `sql/05_productos.sql` | `documentacion/pregunta-05.md` |
+| 6 | Impacto descuentos | `sql/06_descuentos.sql` | `documentacion/pregunta-06.md` |
+| 7 | Tendencias mensuales | `sql/07_tendencias.sql` | `documentacion/pregunta-07.md` |
+| 8 | Pareto 80/20 | `sql/08_pareto.sql` | `documentacion/pregunta-08.md` |
 
 ## Resultados rápidos
 

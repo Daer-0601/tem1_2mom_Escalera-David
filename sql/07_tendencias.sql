@@ -1,17 +1,14 @@
--- Pregunta 7 - Tendencias temporales mensuales
-
+-- Pregunta 7 - Tendencias mensuales
 USE dbex_DEscalera;
 
 WITH mensual AS (
   SELECT
-    YEAR(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'))) AS anio,
-    MONTH(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'))) AS mes,
+    YEAR(order_date) AS anio,
+    MONTH(order_date) AS mes,
     ROUND(SUM(sales), 2) AS ventas,
     ROUND(SUM(profit), 2) AS ganancia
   FROM superstore_DEscalera
-  GROUP BY
-    YEAR(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'))),
-    MONTH(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy')))
+  GROUP BY YEAR(order_date), MONTH(order_date)
 ),
 ordenado AS (
   SELECT
@@ -21,7 +18,10 @@ ordenado AS (
     ganancia,
     LAG(ventas) OVER (ORDER BY anio, mes) AS ventas_mes_ant,
     LAG(ventas, 12) OVER (ORDER BY anio, mes) AS ventas_mismo_mes_ant,
-    ROUND(AVG(ventas) OVER (ORDER BY anio, mes ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS media_movil_3m
+    ROUND(AVG(ventas) OVER (
+      ORDER BY anio, mes
+      ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ), 2) AS media_movil_3m
   FROM mensual
 )
 SELECT
@@ -37,16 +37,13 @@ SELECT
 FROM ordenado
 ORDER BY anio, mes;
 
--- 3 meses con mayor y menor volumen de ventas
 WITH mensual AS (
   SELECT
-    YEAR(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'))) AS anio,
-    MONTH(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'))) AS mes,
+    YEAR(order_date) AS anio,
+    MONTH(order_date) AS mes,
     ROUND(SUM(sales), 2) AS ventas
   FROM superstore_DEscalera
-  GROUP BY
-    YEAR(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'))),
-    MONTH(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy')))
+  GROUP BY YEAR(order_date), MONTH(order_date)
 ),
 ranked AS (
   SELECT

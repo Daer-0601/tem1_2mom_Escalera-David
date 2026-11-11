@@ -1,24 +1,22 @@
 # Notas de optimización
 
-Cosas que fui probando / dejando anotadas mientras armaba las consultas:
+1. **Landing + ORC**  
+   El CSV se lee una vez en `stg_superstore`. De P3 en adelante trabajo sobre `superstore_DEscalera` en ORC/Snappy, ya tipada.
 
-1. **Separador `|`**  
-   Con coma, Hive partía mal los nombres de producto. Cambiar el delimitador evitó filas rotas y no tuve que pelear con `OpenCSVSerde`.
+2. **`postal_code` como STRING + LPAD**  
+   Si lo dejo INT se come el cero de Massachusetts/NJ/etc. En el landing se ven 438 ZIP de 4 dígitos.
 
-2. **Fechas como STRING**  
-   Cargarlas ya como DATE fallaba con `11/8/2016` (mes/día de un dígito). Dejé string y usé `unix_timestamp(..., 'M/d/yyyy')` solo donde hacía falta.
+3. **Fechas a DATE en la carga**  
+   Convierto `M/d/yyyy` una sola vez. Después uso `YEAR`/`MONTH`/`DATEDIFF` sin `unix_timestamp` en cada query.
 
-3. **CTE + ventanas**  
-   En P3/P7/P8 armé primero un agregado chico y después apliqué `LAG`/`SUM OVER`. Así Tez no arrastra las 9994 filas en cada ventana.
+4. **CTE + ventanas sobre agregados**  
+   En P3/P7/P8 primero reduzco y después aplico `LAG`/`SUM OVER`.
 
-4. **RFM con NTILE(5)**  
-   Evité umbrales fijos raros. Los quintiles se adaptan al dataset y se entienden fácil en la defensa.
+5. **Estadísticas**  
+   `ANALYZE TABLE superstore_DEscalera COMPUTE STATISTICS` para que el `DESCRIBE` no quede en `numRows=0`.
 
-5. **Pareto solo con profit > 0**  
-   Si meto productos con pérdida en el acumulado de ganancias, el 80% se distorsiona. Para ventas sí uso todos.
+6. **Partición por año**  
+   Armé `superstore_part` particionada por `anio`. Un `WHERE anio = 2017` no tiene por qué leer 2014-2016. Script: `sql/09_optimizacion.sql`.
 
-6. **Entorno**  
-   El stack vive en el repo (`docker-hadoop-hive-parquet/`): Hive 4 + Beeline. NameNode en 9870, HiveServer2 en 10000.
-
-7. **Si se agranda el dataset**  
-   Particionar por `region` o por año (`anio` derivado) y guardar en Parquet ayudaría. Con 10k filas no hace falta.
+7. **Entorno**  
+   Stack en el repo: `docker-hadoop-hive-parquet/` (Hive 4 + Beeline).

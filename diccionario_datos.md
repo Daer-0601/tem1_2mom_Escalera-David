@@ -1,36 +1,37 @@
 # Diccionario de datos — Sample Superstore
 
-Fuente: Kaggle (`vivek468/superstore-dataset-final`). Archivo de trabajo: `datos/superstore_DEscalera.csv` (separador `|`).
+Fuente: Kaggle (`vivek468/superstore-dataset-final`).  
+Archivo: `datos/superstore_DEscalera.csv` (separador `|`).
 
-Base Hive: `dbex_DEscalera`  
-Tabla: `superstore_DEscalera`
+Base: `dbex_DEscalera`  
+Landing: `stg_superstore` (todo STRING)  
+Analítica: `superstore_DEscalera` (ORC)
 
-| Campo Hive | Tipo | Origen CSV | Descripción | Restricciones / notas |
+| Campo | Tipo analítica | Origen | Descripción | Notas |
 |---|---|---|---|---|
-| row_id | INT | Row ID | Id de fila del archivo | En el sample no hay duplicados |
-| order_id | STRING | Order ID | Código de la orden | Formato CA/US-AAAA-###### |
-| order_date | STRING | Order Date | Fecha del pedido | Texto `M/d/yyyy`; se parsea en SQL |
-| ship_date | STRING | Ship Date | Fecha de envío | Texto `M/d/yyyy` |
-| ship_mode | STRING | Ship Mode | Modo de envío | First/Second/Standard Class, Same Day |
-| customer_id | STRING | Customer ID | Cliente | Clave lógica del cliente |
-| customer_name | STRING | Customer Name | Nombre | Texto libre |
-| segment | STRING | Segment | Segmento comercial | Consumer, Corporate, Home Office |
-| country | STRING | Country | País | En este sample: United States |
+| row_id | INT | Row ID | Id de fila | Sin duplicados en el sample |
+| order_id | STRING | Order ID | Código de orden | CA/US-AAAA-###### |
+| order_date | DATE | Order Date | Fecha pedido | Parseada desde `M/d/yyyy` |
+| ship_date | DATE | Ship Date | Fecha envío | Parseada desde `M/d/yyyy` |
+| ship_mode | STRING | Ship Mode | Modo de envío | First/Second/Standard/Same Day |
+| customer_id | STRING | Customer ID | Cliente | |
+| customer_name | STRING | Customer Name | Nombre | |
+| segment | STRING | Segment | Segmento | Consumer, Corporate, Home Office |
+| country | STRING | Country | País | United States en este sample |
 | city | STRING | City | Ciudad | |
 | state | STRING | State | Estado | |
-| postal_code | INT | Postal Code | Código postal | |
+| postal_code | STRING | Postal Code | ZIP | STRING + LPAD(5) para no perder el 0 |
 | region | STRING | Region | Región | Central, East, South, West |
 | product_id | STRING | Product ID | Producto | |
 | category | STRING | Category | Categoría | Furniture, Office Supplies, Technology |
 | sub_category | STRING | Sub-Category | Subcategoría | |
-| product_name | STRING | Product Name | Nombre del producto | Trae comas → por eso `|` |
-| sales | DOUBLE | Sales | Venta de la línea | Esperado > 0 |
-| quantity | INT | Quantity | Unidades | Entero positivo |
-| discount | DOUBLE | Discount | Descuento | Rango esperado 0–1 |
+| product_name | STRING | Product Name | Nombre | Trae comas → separador `\|` |
+| sales | DOUBLE | Sales | Venta de línea | Esperado > 0 |
+| quantity | INT | Quantity | Unidades | |
+| discount | DOUBLE | Discount | Descuento | Rango 0–1 |
 | profit | DOUBLE | Profit | Ganancia | Puede ser negativa |
 
-Observaciones de la revisión previa a la carga:
+Observaciones previas a la carga:
 - 9994 filas, 21 columnas.
-- Encoding original raro (cp1252); lo pasé a UTF-8.
-- `product_name` tiene comas, así que no dejé el CSV con coma como separador.
-- Fechas vienen como texto; no las convertí en la carga para no pelear con el parseo.
+- Encoding original problemático; el archivo de trabajo va en UTF-8.
+- 438 ZIP venían con 4 dígitos en el CSV (Nueva Inglaterra).

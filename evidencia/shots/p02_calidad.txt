@@ -13,154 +13,92 @@ Connected to: Apache Hive (version 4.0.1)
 Driver: Hive JDBC (version 4.0.1)
 Transaction isolation: TRANSACTION_REPEATABLE_READ
 0: jdbc:hive2://localhost:10000> -- Pregunta 2 - Auditoria de calidad
-0: jdbc:hive2://localhost:10000> 
 0: jdbc:hive2://localhost:10000> USE dbex_DEscalera;
-INFO  : Compiling command(queryId=hive_20261111125736_938a9e08-6d9c-4c74-a7b3-5b2917e6744f): USE dbex_DEscalera
+INFO  : Compiling command(queryId=hive_20261111141849_b5c5b306-4438-4e18-b121-7ed20b278a6a): USE dbex_DEscalera
 INFO  : Semantic Analysis Completed (retrial = false)
 INFO  : Created Hive schema: Schema(fieldSchemas:null, properties:null)
-INFO  : Completed compiling command(queryId=hive_20261111125736_938a9e08-6d9c-4c74-a7b3-5b2917e6744f); Time taken: 0.057 seconds
+INFO  : Completed compiling command(queryId=hive_20261111141849_b5c5b306-4438-4e18-b121-7ed20b278a6a); Time taken: 0.212 seconds
 INFO  : Concurrency mode is disabled, not creating a lock manager
-INFO  : Executing command(queryId=hive_20261111125736_938a9e08-6d9c-4c74-a7b3-5b2917e6744f): USE dbex_DEscalera
+INFO  : Executing command(queryId=hive_20261111141849_b5c5b306-4438-4e18-b121-7ed20b278a6a): USE dbex_DEscalera
 INFO  : Starting task [Stage-0:DDL] in serial mode
-INFO  : Completed executing command(queryId=hive_20261111125736_938a9e08-6d9c-4c74-a7b3-5b2917e6744f); Time taken: 0.034 seconds
-No rows affected (0.278 seconds)
+INFO  : Completed executing command(queryId=hive_20261111141849_b5c5b306-4438-4e18-b121-7ed20b278a6a); Time taken: 0.047 seconds
+No rows affected (0.437 seconds)
 0: jdbc:hive2://localhost:10000> 
-0: jdbc:hive2://localhost:10000> -- Resumen de calidad en una sola consulta
-0: jdbc:hive2://localhost:10000> WITH base AS (
-. . . . . . . . . . . . . . . .>   SELECT
-. . . . . . . . . . . . . . . .>     row_id,
-. . . . . . . . . . . . . . . .>     order_id,
-. . . . . . . . . . . . . . . .>     customer_id,
-. . . . . . . . . . . . . . . .>     order_date,
-. . . . . . . . . . . . . . . .>     ship_date,
-. . . . . . . . . . . . . . . .>     sales,
-. . . . . . . . . . . . . . . .>     discount,
-. . . . . . . . . . . . . . . .>     profit,
-. . . . . . . . . . . . . . . .>     quantity,
-. . . . . . . . . . . . . . . .>     postal_code,
-. . . . . . . . . . . . . . . .>     product_name,
-. . . . . . . . . . . . . . . .>     from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd') AS od,
-. . . . . . . . . . . . . . . .>     from_unixtime(unix_timestamp(ship_date, 'M/d/yyyy'), 'yyyy-MM-dd') AS sd
-. . . . . . . . . . . . . . . .>   FROM superstore_DEscalera
-. . . . . . . . . . . . . . . .> )
-. . . . . . . . . . . . . . . .> SELECT
+0: jdbc:hive2://localhost:10000> SELECT
 . . . . . . . . . . . . . . . .>   COUNT(*) AS total_registros,
 . . . . . . . . . . . . . . . .>   COUNT(*) - COUNT(DISTINCT row_id) AS row_id_duplicados,
 . . . . . . . . . . . . . . . .>   COUNT(DISTINCT order_id) AS ordenes_unicas,
 . . . . . . . . . . . . . . . .>   COUNT(DISTINCT customer_id) AS clientes_unicos,
-. . . . . . . . . . . . . . . .>   SUM(CASE WHEN row_id IS NULL THEN 1 ELSE 0 END) AS null_row_id,
 . . . . . . . . . . . . . . . .>   SUM(CASE WHEN order_id IS NULL OR order_id = '' THEN 1 ELSE 0 END) AS null_order_id,
 . . . . . . . . . . . . . . . .>   SUM(CASE WHEN customer_id IS NULL OR customer_id = '' THEN 1 ELSE 0 END) AS null_customer_id,
-. . . . . . . . . . . . . . . .>   SUM(CASE WHEN order_date IS NULL OR order_date = '' THEN 1 ELSE 0 END) AS null_order_date,
-. . . . . . . . . . . . . . . .>   SUM(CASE WHEN ship_date IS NULL OR ship_date = '' THEN 1 ELSE 0 END) AS null_ship_date,
+. . . . . . . . . . . . . . . .>   SUM(CASE WHEN order_date IS NULL THEN 1 ELSE 0 END) AS fechas_pedido_invalidas,
+. . . . . . . . . . . . . . . .>   SUM(CASE WHEN ship_date IS NULL THEN 1 ELSE 0 END) AS fechas_envio_invalidas,
+. . . . . . . . . . . . . . . .>   SUM(CASE WHEN ship_date < order_date THEN 1 ELSE 0 END) AS envio_antes_pedido,
 . . . . . . . . . . . . . . . .>   SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) AS null_sales,
-. . . . . . . . . . . . . . . .>   SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) AS null_discount,
-. . . . . . . . . . . . . . . .>   SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS null_profit,
-. . . . . . . . . . . . . . . .>   SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) AS null_product_name,
-. . . . . . . . . . . . . . . .>   SUM(CASE WHEN od IS NULL OR sd IS NULL THEN 1 ELSE 0 END) AS fechas_invalidas,
 . . . . . . . . . . . . . . . .>   SUM(CASE WHEN sales <= 0 THEN 1 ELSE 0 END) AS ventas_le_cero,
 . . . . . . . . . . . . . . . .>   SUM(CASE WHEN discount < 0 OR discount > 1 THEN 1 ELSE 0 END) AS descuento_fuera_rango,
-. . . . . . . . . . . . . . . .>   SUM(CASE WHEN sd < od THEN 1 ELSE 0 END) AS envio_antes_pedido,
 . . . . . . . . . . . . . . . .>   SUM(CASE WHEN profit < 0 THEN 1 ELSE 0 END) AS lineas_con_perdida
-. . . . . . . . . . . . . . . .> FROM base;
-INFO  : Compiling command(queryId=hive_20261111125737_6a795c58-779c-4d64-810f-c5d425fd2d1e): WITH base AS (
-SELECT
-row_id,
-order_id,
-customer_id,
-order_date,
-ship_date,
-sales,
-discount,
-profit,
-quantity,
-postal_code,
-product_name,
-from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd') AS od,
-from_unixtime(unix_timestamp(ship_date, 'M/d/yyyy'), 'yyyy-MM-dd') AS sd
-FROM superstore_DEscalera
-)
-SELECT
+. . . . . . . . . . . . . . . .> FROM superstore_DEscalera;
+INFO  : Compiling command(queryId=hive_20261111141850_894fe8c9-f61f-4b9b-8b68-547d9efc0692): SELECT
 COUNT(*) AS total_registros,
 COUNT(*) - COUNT(DISTINCT row_id) AS row_id_duplicados,
 COUNT(DISTINCT order_id) AS ordenes_unicas,
 COUNT(DISTINCT customer_id) AS clientes_unicos,
-SUM(CASE WHEN row_id IS NULL THEN 1 ELSE 0 END) AS null_row_id,
 SUM(CASE WHEN order_id IS NULL OR order_id = '' THEN 1 ELSE 0 END) AS null_order_id,
 SUM(CASE WHEN customer_id IS NULL OR customer_id = '' THEN 1 ELSE 0 END) AS null_customer_id,
-SUM(CASE WHEN order_date IS NULL OR order_date = '' THEN 1 ELSE 0 END) AS null_order_date,
-SUM(CASE WHEN ship_date IS NULL OR ship_date = '' THEN 1 ELSE 0 END) AS null_ship_date,
+SUM(CASE WHEN order_date IS NULL THEN 1 ELSE 0 END) AS fechas_pedido_invalidas,
+SUM(CASE WHEN ship_date IS NULL THEN 1 ELSE 0 END) AS fechas_envio_invalidas,
+SUM(CASE WHEN ship_date < order_date THEN 1 ELSE 0 END) AS envio_antes_pedido,
 SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) AS null_sales,
-SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) AS null_discount,
-SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS null_profit,
-SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) AS null_product_name,
-SUM(CASE WHEN od IS NULL OR sd IS NULL THEN 1 ELSE 0 END) AS fechas_invalidas,
 SUM(CASE WHEN sales <= 0 THEN 1 ELSE 0 END) AS ventas_le_cero,
 SUM(CASE WHEN discount < 0 OR discount > 1 THEN 1 ELSE 0 END) AS descuento_fuera_rango,
-SUM(CASE WHEN sd < od THEN 1 ELSE 0 END) AS envio_antes_pedido,
 SUM(CASE WHEN profit < 0 THEN 1 ELSE 0 END) AS lineas_con_perdida
-FROM base
-INFO  : No Stats for dbex_descalera@superstore_descalera, Columns: order_date, discount, row_id, customer_id, product_name, order_id, profit, sales, ship_date
+FROM superstore_DEscalera
 INFO  : Semantic Analysis Completed (retrial = false)
-INFO  : Created Hive schema: Schema(fieldSchemas:[FieldSchema(name:total_registros, type:bigint, comment:null), FieldSchema(name:row_id_duplicados, type:bigint, comment:null), FieldSchema(name:ordenes_unicas, type:bigint, comment:null), FieldSchema(name:clientes_unicos, type:bigint, comment:null), FieldSchema(name:null_row_id, type:bigint, comment:null), FieldSchema(name:null_order_id, type:bigint, comment:null), FieldSchema(name:null_customer_id, type:bigint, comment:null), FieldSchema(name:null_order_date, type:bigint, comment:null), FieldSchema(name:null_ship_date, type:bigint, comment:null), FieldSchema(name:null_sales, type:bigint, comment:null), FieldSchema(name:null_discount, type:bigint, comment:null), FieldSchema(name:null_profit, type:bigint, comment:null), FieldSchema(name:null_product_name, type:bigint, comment:null), FieldSchema(name:fechas_invalidas, type:bigint, comment:null), FieldSchema(name:ventas_le_cero, type:bigint, comment:null), FieldSchema(name:descuento_fuera_rango, type:bigint, comment:null), FieldSchema(name:envio_antes_pedido, type:bigint, comment:null), FieldSchema(name:lineas_con_perdida, type:bigint, comment:null)], properties:null)
-INFO  : Completed compiling command(queryId=hive_20261111125737_6a795c58-779c-4d64-810f-c5d425fd2d1e); Time taken: 1.542 seconds
+INFO  : Created Hive schema: Schema(fieldSchemas:[FieldSchema(name:total_registros, type:bigint, comment:null), FieldSchema(name:row_id_duplicados, type:bigint, comment:null), FieldSchema(name:ordenes_unicas, type:bigint, comment:null), FieldSchema(name:clientes_unicos, type:bigint, comment:null), FieldSchema(name:null_order_id, type:bigint, comment:null), FieldSchema(name:null_customer_id, type:bigint, comment:null), FieldSchema(name:fechas_pedido_invalidas, type:bigint, comment:null), FieldSchema(name:fechas_envio_invalidas, type:bigint, comment:null), FieldSchema(name:envio_antes_pedido, type:bigint, comment:null), FieldSchema(name:null_sales, type:bigint, comment:null), FieldSchema(name:ventas_le_cero, type:bigint, comment:null), FieldSchema(name:descuento_fuera_rango, type:bigint, comment:null), FieldSchema(name:lineas_con_perdida, type:bigint, comment:null)], properties:null)
+INFO  : Completed compiling command(queryId=hive_20261111141850_894fe8c9-f61f-4b9b-8b68-547d9efc0692); Time taken: 1.06 seconds
 INFO  : Concurrency mode is disabled, not creating a lock manager
-INFO  : Executing command(queryId=hive_20261111125737_6a795c58-779c-4d64-810f-c5d425fd2d1e): WITH base AS (
-SELECT
-row_id,
-order_id,
-customer_id,
-order_date,
-ship_date,
-sales,
-discount,
-profit,
-quantity,
-postal_code,
-product_name,
-from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd') AS od,
-from_unixtime(unix_timestamp(ship_date, 'M/d/yyyy'), 'yyyy-MM-dd') AS sd
-FROM superstore_DEscalera
-)
-SELECT
+INFO  : Executing command(queryId=hive_20261111141850_894fe8c9-f61f-4b9b-8b68-547d9efc0692): SELECT
 COUNT(*) AS total_registros,
 COUNT(*) - COUNT(DISTINCT row_id) AS row_id_duplicados,
 COUNT(DISTINCT order_id) AS ordenes_unicas,
 COUNT(DISTINCT customer_id) AS clientes_unicos,
-SUM(CASE WHEN row_id IS NULL THEN 1 ELSE 0 END) AS null_row_id,
 SUM(CASE WHEN order_id IS NULL OR order_id = '' THEN 1 ELSE 0 END) AS null_order_id,
 SUM(CASE WHEN customer_id IS NULL OR customer_id = '' THEN 1 ELSE 0 END) AS null_customer_id,
-SUM(CASE WHEN order_date IS NULL OR order_date = '' THEN 1 ELSE 0 END) AS null_order_date,
-SUM(CASE WHEN ship_date IS NULL OR ship_date = '' THEN 1 ELSE 0 END) AS null_ship_date,
+SUM(CASE WHEN order_date IS NULL THEN 1 ELSE 0 END) AS fechas_pedido_invalidas,
+SUM(CASE WHEN ship_date IS NULL THEN 1 ELSE 0 END) AS fechas_envio_invalidas,
+SUM(CASE WHEN ship_date < order_date THEN 1 ELSE 0 END) AS envio_antes_pedido,
 SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) AS null_sales,
-SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) AS null_discount,
-SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) AS null_profit,
-SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) AS null_product_name,
-SUM(CASE WHEN od IS NULL OR sd IS NULL THEN 1 ELSE 0 END) AS fechas_invalidas,
 SUM(CASE WHEN sales <= 0 THEN 1 ELSE 0 END) AS ventas_le_cero,
 SUM(CASE WHEN discount < 0 OR discount > 1 THEN 1 ELSE 0 END) AS descuento_fuera_rango,
-SUM(CASE WHEN sd < od THEN 1 ELSE 0 END) AS envio_antes_pedido,
 SUM(CASE WHEN profit < 0 THEN 1 ELSE 0 END) AS lineas_con_perdida
-FROM base
-INFO  : Query ID = hive_20261111125737_6a795c58-779c-4d64-810f-c5d425fd2d1e
+FROM superstore_DEscalera
+INFO  : Query ID = hive_20261111141850_894fe8c9-f61f-4b9b-8b68-547d9efc0692
 INFO  : Total jobs = 1
 INFO  : Launching Job 1 out of 1
 INFO  : Starting task [Stage-1:MAPRED] in serial mode
-INFO  : Subscribed to counters: [] for queryId: hive_20261111125737_6a795c58-779c-4d64-810f-c5d425fd2d1e
+INFO  : Subscribed to counters: [] for queryId: hive_20261111141850_894fe8c9-f61f-4b9b-8b68-547d9efc0692
 INFO  : Tez session hasn't been created yet. Opening session
-INFO  : Dag name: WITH base AS (
-SELECT......perdida
-FROM base (Stage-1)
-INFO  : HS2 Host: [98f49942809f], Query ID: [hive_20261111125737_6a795c58-779c-4d64-810f-c5d425fd2d1e], Dag ID: [dag_1794401859702_0001_1], DAG Session ID: [application_1794401859702_0001]
-INFO  : Status: Running (Executing on YARN cluster with App id application_1794401859702_0001)
+INFO  : Dag name: SELECT
+COUNT(*) AS to......erstore_DEscalera (Stage-1)
+INFO  : HS2 Host: [98f49942809f], Query ID: [hive_20261111141850_894fe8c9-f61f-4b9b-8b68-547d9efc0692], Dag ID: [dag_1794406731843_0001_1], DAG Session ID: [application_1794406731843_0001]
+INFO  : Status: Running (Executing on YARN cluster with App id application_1794406731843_0001)
 
 [2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1            container       RUNNING      1          0        1        0       0       0  
+[2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 00/02  [>>--------------------------] 0%    ELAPSED TIME: 4.94 s     
+[2K[31;1mVERTICES: 00/02  [>>--------------------------] 0%    ELAPSED TIME: 0.56 s     
+[22;0m[2K----------------------------------------------------------------------------------------------
+[8A[2K----------------------------------------------------------------------------------------------
+[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
+[22;0m[2K----------------------------------------------------------------------------------------------
+[2KMap 1            container        INITED      1          0        0        1       0       0  
+Reducer 2        container        INITED      1          0        0        1       0       0  
+[2K----------------------------------------------------------------------------------------------
+[2K[31;1mVERTICES: 00/02  [>>--------------------------] 0%    ELAPSED TIME: 1.08 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
 [8A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
@@ -168,31 +106,7 @@ Reducer 2        container        INITED      1          0        0        1    
 [2KMap 1            container       RUNNING      1          0        1        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 00/02  [>>--------------------------] 0%    ELAPSED TIME: 6.75 s     
-[22;0m[2K----------------------------------------------------------------------------------------------
-[8A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1            container       RUNNING      1          0        1        0       0       0  
-Reducer 2        container        INITED      1          0        0        1       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 00/02  [>>--------------------------] 0%    ELAPSED TIME: 7.76 s     
-[22;0m[2K----------------------------------------------------------------------------------------------
-[8A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1            container       RUNNING      1          0        1        0       0       0  
-Reducer 2        container        INITED      1          0        0        1       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 00/02  [>>--------------------------] 0%    ELAPSED TIME: 8.77 s     
-[22;0m[2K----------------------------------------------------------------------------------------------
-[8A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1            container       RUNNING      1          0        1        0       0       0  
-Reducer 2        container        INITED      1          0        0        1       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 00/02  [>>--------------------------] 0%    ELAPSED TIME: 9.78 s     
+[2K[31;1mVERTICES: 00/02  [>>--------------------------] 0%    ELAPSED TIME: 1.58 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
 [8A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
@@ -200,7 +114,7 @@ Reducer 2        container        INITED      1          0        0        1    
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 10.79 s    
+[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 2.09 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
 [8A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
@@ -208,7 +122,7 @@ Reducer 2        container        INITED      1          0        0        1    
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 11.81 s    
+[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 2.59 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
 [8A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
@@ -216,7 +130,7 @@ Reducer 2        container        INITED      1          0        0        1    
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 12.84 s    
+[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 3.10 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
 [8A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
@@ -224,7 +138,7 @@ Reducer 2        container        INITED      1          0        0        1    
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container       RUNNING      1          0        1        0       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 13.85 s    
+[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 3.61 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
 [8A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
@@ -232,7 +146,7 @@ Reducer 2        container       RUNNING      1          0        1        0    
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container       RUNNING      1          0        1        0       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 15.36 s    
+[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 4.12 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
 [8A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
@@ -240,731 +154,623 @@ Reducer 2        container       RUNNING      1          0        1        0    
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container       RUNNING      1          0        1        0       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 16.88 s    
-[22;0m[2K----------------------------------------------------------------------------------------------
-[8A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 2        container       RUNNING      1          0        1        0       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 21.08 s    
+[2K[31;1mVERTICES: 01/02  [=============>>-------------] 50%   ELAPSED TIME: 4.62 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
 [8A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2 ...... container     SUCCEEDED      1          1        0        0       0       0  
+INFO  : Completed executing command(queryId=hive_20261111141850_894fe8c9-f61f-4b9b-8b68-547d9efc0692); Time taken: 9.88 seconds
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 22.01 s    
+[2K[31;1mVERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 5.33 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-INFO  : Completed executing command(queryId=hive_20261111125737_6a795c58-779c-4d64-810f-c5d425fd2d1e); Time taken: 26.766 seconds
-total_registros	row_id_duplicados	ordenes_unicas	clientes_unicos	null_row_id	null_order_id	null_customer_id	null_order_date	null_ship_date	null_sales	null_discount	null_profit	null_product_name	fechas_invalidas	ventas_le_cero	descuento_fuera_rango	envio_antes_pedido	lineas_con_perdida
-9994	0	5009	793	0	0	0	0	0	0	0	0	0	0	0	0	0	1871
-1 row selected (28.953 seconds)
+total_registros	row_id_duplicados	ordenes_unicas	clientes_unicos	null_order_id	null_customer_id	fechas_pedido_invalidas	fechas_envio_invalidas	envio_antes_pedido	null_sales	ventas_le_cero	descuento_fuera_rango	lineas_con_perdida
+9994	0	5009	793	0	0	0	0	0	0	0	0	1871
+1 row selected (11.133 seconds)
 0: jdbc:hive2://localhost:10000> 
-0: jdbc:hive2://localhost:10000> -- Detalle de nulos por columna (por si hace falta mostrar mas fino)
-0: jdbc:hive2://localhost:10000> SELECT
-. . . . . . . . . . . . . . . .>   'order_id' AS campo, SUM(CASE WHEN order_id IS NULL OR order_id = '' THEN 1 ELSE 0 END) AS nulos FROM superstore_DEscalera
-. . . . . . . . . . . . . . . .> UNION ALL
-. . . . . . . . . . . . . . . .> SELECT 'customer_name', SUM(CASE WHEN customer_name IS NULL OR customer_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
-. . . . . . . . . . . . . . . .> UNION ALL
-. . . . . . . . . . . . . . . .> SELECT 'postal_code', SUM(CASE WHEN postal_code IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-. . . . . . . . . . . . . . . .> UNION ALL
-. . . . . . . . . . . . . . . .> SELECT 'product_name', SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
-. . . . . . . . . . . . . . . .> UNION ALL
-. . . . . . . . . . . . . . . .> SELECT 'sales', SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-. . . . . . . . . . . . . . . .> UNION ALL
-. . . . . . . . . . . . . . . .> SELECT 'discount', SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-. . . . . . . . . . . . . . . .> UNION ALL
-. . . . . . . . . . . . . . . .> SELECT 'profit', SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera;
-INFO  : Compiling command(queryId=hive_20261111125807_2dbad5a1-fe5c-4512-8c49-e1038cc446d3): SELECT
-'order_id' AS campo, SUM(CASE WHEN order_id IS NULL OR order_id = '' THEN 1 ELSE 0 END) AS nulos FROM superstore_DEscalera
-UNION ALL
-SELECT 'customer_name', SUM(CASE WHEN customer_name IS NULL OR customer_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'postal_code', SUM(CASE WHEN postal_code IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'product_name', SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'sales', SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'discount', SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'profit', SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-INFO  : No Stats for dbex_descalera@superstore_descalera, Columns: order_id
-INFO  : No Stats for dbex_descalera@superstore_descalera, Columns: customer_name
-INFO  : No Stats for dbex_descalera@superstore_descalera, Columns: postal_code
-INFO  : No Stats for dbex_descalera@superstore_descalera, Columns: product_name
-INFO  : No Stats for dbex_descalera@superstore_descalera, Columns: sales
-INFO  : No Stats for dbex_descalera@superstore_descalera, Columns: discount
-INFO  : No Stats for dbex_descalera@superstore_descalera, Columns: profit
+0: jdbc:hive2://localhost:10000> SELECT campo, nulos FROM (
+. . . . . . . . . . . . . . . .>   SELECT 'customer_name' AS campo, SUM(CASE WHEN customer_name IS NULL OR customer_name = '' THEN 1 ELSE 0 END) AS nulos FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .>   UNION ALL SELECT 'postal_code', SUM(CASE WHEN postal_code IS NULL OR postal_code = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .>   UNION ALL SELECT 'product_name', SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .>   UNION ALL SELECT 'sales', SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .>   UNION ALL SELECT 'discount', SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .>   UNION ALL SELECT 'profit', SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .> ) t
+. . . . . . . . . . . . . . . .> ORDER BY campo;
+INFO  : Compiling command(queryId=hive_20261111141901_07cb4bfe-b022-448e-990f-945b4f3dc2c3): SELECT campo, nulos FROM (
+SELECT 'customer_name' AS campo, SUM(CASE WHEN customer_name IS NULL OR customer_name = '' THEN 1 ELSE 0 END) AS nulos FROM superstore_DEscalera
+UNION ALL SELECT 'postal_code', SUM(CASE WHEN postal_code IS NULL OR postal_code = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
+UNION ALL SELECT 'product_name', SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
+UNION ALL SELECT 'sales', SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+UNION ALL SELECT 'discount', SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+UNION ALL SELECT 'profit', SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+) t
+ORDER BY campo
 INFO  : Semantic Analysis Completed (retrial = false)
 INFO  : Created Hive schema: Schema(fieldSchemas:[FieldSchema(name:campo, type:string, comment:null), FieldSchema(name:nulos, type:bigint, comment:null)], properties:null)
-INFO  : Completed compiling command(queryId=hive_20261111125807_2dbad5a1-fe5c-4512-8c49-e1038cc446d3); Time taken: 2.778 seconds
+INFO  : Completed compiling command(queryId=hive_20261111141901_07cb4bfe-b022-448e-990f-945b4f3dc2c3); Time taken: 1.363 seconds
 INFO  : Concurrency mode is disabled, not creating a lock manager
-INFO  : Executing command(queryId=hive_20261111125807_2dbad5a1-fe5c-4512-8c49-e1038cc446d3): SELECT
-'order_id' AS campo, SUM(CASE WHEN order_id IS NULL OR order_id = '' THEN 1 ELSE 0 END) AS nulos FROM superstore_DEscalera
-UNION ALL
-SELECT 'customer_name', SUM(CASE WHEN customer_name IS NULL OR customer_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'postal_code', SUM(CASE WHEN postal_code IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'product_name', SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'sales', SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'discount', SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-UNION ALL
-SELECT 'profit', SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
-INFO  : Query ID = hive_20261111125807_2dbad5a1-fe5c-4512-8c49-e1038cc446d3
+INFO  : Executing command(queryId=hive_20261111141901_07cb4bfe-b022-448e-990f-945b4f3dc2c3): SELECT campo, nulos FROM (
+SELECT 'customer_name' AS campo, SUM(CASE WHEN customer_name IS NULL OR customer_name = '' THEN 1 ELSE 0 END) AS nulos FROM superstore_DEscalera
+UNION ALL SELECT 'postal_code', SUM(CASE WHEN postal_code IS NULL OR postal_code = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
+UNION ALL SELECT 'product_name', SUM(CASE WHEN product_name IS NULL OR product_name = '' THEN 1 ELSE 0 END) FROM superstore_DEscalera
+UNION ALL SELECT 'sales', SUM(CASE WHEN sales IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+UNION ALL SELECT 'discount', SUM(CASE WHEN discount IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+UNION ALL SELECT 'profit', SUM(CASE WHEN profit IS NULL THEN 1 ELSE 0 END) FROM superstore_DEscalera
+) t
+ORDER BY campo
+INFO  : Query ID = hive_20261111141901_07cb4bfe-b022-448e-990f-945b4f3dc2c3
 INFO  : Total jobs = 1
 INFO  : Launching Job 1 out of 1
 INFO  : Starting task [Stage-1:MAPRED] in serial mode
-INFO  : Subscribed to counters: [] for queryId: hive_20261111125807_2dbad5a1-fe5c-4512-8c49-e1038cc446d3
+INFO  : Subscribed to counters: [] for queryId: hive_20261111141901_07cb4bfe-b022-448e-990f-945b4f3dc2c3
 INFO  : Session is already open
-INFO  : Dag name: SELECT
-'order_id' AS ......erstore_DEscalera (Stage-1)
-INFO  : HS2 Host: [98f49942809f], Query ID: [hive_20261111125807_2dbad5a1-fe5c-4512-8c49-e1038cc446d3], Dag ID: [dag_1794401859702_0001_2], DAG Session ID: [application_1794401859702_0001]
-INFO  : Status: Running (Executing on YARN cluster with App id application_1794401859702_0001)
+INFO  : Dag name: SELECT campo, nulos F...... t
+ORDER BY campo (Stage-1)
+INFO  : HS2 Host: [98f49942809f], Query ID: [hive_20261111141901_07cb4bfe-b022-448e-990f-945b4f3dc2c3], Dag ID: [dag_1794406731843_0001_2], DAG Session ID: [application_1794406731843_0001]
+INFO  : Status: Running (Executing on YARN cluster with App id application_1794406731843_0001)
 
 [2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4            container        INITED      1          0        0        1       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6            container        INITED      1          0        0        1       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8            container       RUNNING      1          0        1        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10           container        INITED      1          0        0        1       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5            container        INITED      1          0        0        1       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7            container        INITED      1          0        0        1       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9            container        INITED      1          0        0        1       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 00/14  [>>--------------------------] 0%    ELAPSED TIME: 2.47 s     
+[2K[31;1mVERTICES: 00/13  [>>--------------------------] 0%    ELAPSED TIME: 1.39 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4            container        INITED      1          0        0        1       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6            container        INITED      1          0        0        1       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10           container        INITED      1          0        0        1       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7            container        INITED      1          0        0        1       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9            container        INITED      1          0        0        1       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/14  [=>>-------------------------] 7%    ELAPSED TIME: 2.98 s     
+[2K[31;1mVERTICES: 01/13  [==>>------------------------] 7%    ELAPSED TIME: 1.91 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4            container        INITED      1          0        0        1       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6            container        INITED      1          0        0        1       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10           container        INITED      1          0        0        1       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7            container        INITED      1          0        0        1       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9            container        INITED      1          0        0        1       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/14  [=>>-------------------------] 7%    ELAPSED TIME: 3.49 s     
+[2K[31;1mVERTICES: 01/13  [==>>------------------------] 7%    ELAPSED TIME: 2.42 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4            container        INITED      1          0        0        1       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6            container        INITED      1          0        0        1       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10           container        INITED      1          0        0        1       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7            container        INITED      1          0        0        1       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9            container        INITED      1          0        0        1       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/14  [=>>-------------------------] 7%    ELAPSED TIME: 4.01 s     
+[2K[31;1mVERTICES: 01/13  [==>>------------------------] 7%    ELAPSED TIME: 2.93 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4            container       RUNNING      1          0        1        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6            container        INITED      1          0        0        1       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10           container        INITED      1          0        0        1       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7            container        INITED      1          0        0        1       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 01/14  [=>>-------------------------] 7%    ELAPSED TIME: 4.52 s     
+[2K[31;1mVERTICES: 02/13  [====>>----------------------] 15%   ELAPSED TIME: 3.44 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6            container        INITED      1          0        0        1       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10           container        INITED      1          0        0        1       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7            container        INITED      1          0        0        1       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 02/14  [===>>-----------------------] 14%   ELAPSED TIME: 5.03 s     
+[2K[31;1mVERTICES: 02/13  [====>>----------------------] 15%   ELAPSED TIME: 3.95 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6            container       RUNNING      1          0        1        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10           container        INITED      1          0        0        1       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7            container       RUNNING      1          0        1        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 02/14  [===>>-----------------------] 14%   ELAPSED TIME: 6.04 s     
+[2K[31;1mVERTICES: 02/13  [====>>----------------------] 15%   ELAPSED TIME: 4.46 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10           container        INITED      1          0        0        1       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 03/14  [=====>>---------------------] 21%   ELAPSED TIME: 7.05 s     
+[2K[31;1mVERTICES: 03/13  [======>>--------------------] 23%   ELAPSED TIME: 4.97 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11           container        INITED      1          0        0        1       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 04/14  [=======>>-------------------] 28%   ELAPSED TIME: 8.06 s     
+[2K[31;1mVERTICES: 03/13  [======>>--------------------] 23%   ELAPSED TIME: 5.47 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12           container        INITED      1          0        0        1       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 04/14  [=======>>-------------------] 28%   ELAPSED TIME: 9.07 s     
+[2K[31;1mVERTICES: 04/13  [========>>------------------] 30%   ELAPSED TIME: 5.98 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14           container        INITED      1          0        0        1       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 05/14  [=========>>-----------------] 35%   ELAPSED TIME: 10.08 s    
+[2K[31;1mVERTICES: 04/13  [========>>------------------] 30%   ELAPSED TIME: 6.49 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13           container        INITED      1          0        0        1       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 06/14  [===========>>---------------] 42%   ELAPSED TIME: 11.09 s    
+[2K[31;1mVERTICES: 04/13  [========>>------------------] 30%   ELAPSED TIME: 7.00 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1            container        INITED      1          0        0        1       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 06/14  [===========>>---------------] 42%   ELAPSED TIME: 12.10 s    
+[2K[31;1mVERTICES: 05/13  [==========>>----------------] 38%   ELAPSED TIME: 8.01 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
+[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
+[22;0m[2K----------------------------------------------------------------------------------------------
+[2KMap 1            container        INITED      1          0        0        1       0       0  
+Reducer 2        container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
+[2K----------------------------------------------------------------------------------------------
+[2K[31;1mVERTICES: 05/13  [==========>>----------------] 38%   ELAPSED TIME: 4.31 s     
+[22;0m[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
+[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
+[22;0m[2K----------------------------------------------------------------------------------------------
+[2KMap 1            container       RUNNING      1          0        1        0       0       0  
+Reducer 2        container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
+[2K----------------------------------------------------------------------------------------------
+[2K[31;1mVERTICES: 05/13  [==========>>----------------] 38%   ELAPSED TIME: 4.82 s     
+[22;0m[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container        INITED      1          0        0        1       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 07/14  [=============>>-------------] 50%   ELAPSED TIME: 13.11 s    
+[2K[31;1mVERTICES: 06/13  [============>>--------------] 46%   ELAPSED TIME: 5.34 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container       RUNNING      1          0        1        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 07/14  [=============>>-------------] 50%   ELAPSED TIME: 14.12 s    
+[2K[31;1mVERTICES: 06/13  [============>>--------------] 46%   ELAPSED TIME: 5.86 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9        container       RUNNING      1          0        1        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6        container        INITED      1          0        0        1       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 07/14  [=============>>-------------] 50%   ELAPSED TIME: 15.13 s    
+[2K[31;1mVERTICES: 06/13  [============>>--------------] 46%   ELAPSED TIME: 7.62 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container        INITED      1          0        0        1       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8        container        INITED      1          0        0        1       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 08/14  [==============>>------------] 57%   ELAPSED TIME: 16.64 s    
+[2K[31;1mVERTICES: 07/13  [==============>>------------] 53%   ELAPSED TIME: 8.64 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container       RUNNING      1          0        1        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 08/14  [==============>>------------] 57%   ELAPSED TIME: 18.14 s    
+[2K[31;1mVERTICES: 08/13  [================>>----------] 61%   ELAPSED TIME: 9.65 s     
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container       RUNNING      1          0        1        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10       container        INITED      1          0        0        1       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 08/14  [==============>>------------] 57%   ELAPSED TIME: 19.65 s    
+[2K[31;1mVERTICES: 08/13  [================>>----------] 61%   ELAPSED TIME: 10.66 s    
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container       RUNNING      1          0        1        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container        INITED      1          0        0        1       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 08/14  [==============>>------------] 57%   ELAPSED TIME: 21.15 s    
+[2K[31;1mVERTICES: 09/13  [==================>>--------] 69%   ELAPSED TIME: 15.41 s    
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5        container       RUNNING      1          0        1        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container        INITED      1          0        0        1       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12       container       RUNNING      1          0        1        0       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 08/14  [==============>>------------] 57%   ELAPSED TIME: 25.43 s    
+[2K[31;1mVERTICES: 09/13  [==================>>--------] 69%   ELAPSED TIME: 16.42 s    
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container       RUNNING      1          0        1        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14       container        INITED      1          0        0        1       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 09/14  [================>>----------] 64%   ELAPSED TIME: 27.44 s    
+[2K[31;1mVERTICES: 10/13  [====================>>------] 76%   ELAPSED TIME: 17.43 s    
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7        container       RUNNING      1          0        1        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14 ..... container     SUCCEEDED      1          1        0        0       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 09/14  [================>>----------] 64%   ELAPSED TIME: 29.45 s    
+[2K[31;1mVERTICES: 11/13  [======================>>----] 84%   ELAPSED TIME: 18.93 s    
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container        INITED      1          0        0        1       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14 ..... container     SUCCEEDED      1          1        0        0       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 10/14  [==================>>--------] 71%   ELAPSED TIME: 31.46 s    
+[2K[31;1mVERTICES: 11/13  [======================>>----] 84%   ELAPSED TIME: 20.62 s    
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11       container       RUNNING      1          0        1        0       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 10/14  [==================>>--------] 71%   ELAPSED TIME: 33.47 s    
-[22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13       container        INITED      1          0        0        1       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 11/14  [====================>>------] 78%   ELAPSED TIME: 35.48 s    
-[22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container        INITED      1          0        0        1       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 12/14  [======================>>----] 85%   ELAPSED TIME: 37.98 s    
-[22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 2        container        INITED      1          0        0        1       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15       container       RUNNING      1          0        1        0       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 12/14  [======================>>----] 85%   ELAPSED TIME: 40.49 s    
-[22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
-[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
-[22;0m[2K----------------------------------------------------------------------------------------------
-[2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 2        container       RUNNING      1          0        1        0       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15 ..... container     SUCCEEDED      1          1        0        0       0       0  
-[2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 13/14  [========================>>--] 92%   ELAPSED TIME: 43.00 s    
-[22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 4        container        INITED      1          0        0        1       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14 ..... container     SUCCEEDED      1          1        0        0       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 14/14  [==========================>>] 100%  ELAPSED TIME: 45.51 s    
+[2K[31;1mVERTICES: 12/13  [========================>>--] 92%   ELAPSED TIME: 22.13 s    
 [22;0m[2K----------------------------------------------------------------------------------------------
-[20A[2K----------------------------------------------------------------------------------------------
+[19A[2K----------------------------------------------------------------------------------------------
 [2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
 [22;0m[2K----------------------------------------------------------------------------------------------
 [2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
 Reducer 2 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 4 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 5 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 6 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 7 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 8 .......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 9 ...... container     SUCCEEDED      1          1        0        0       0       0  
-Map 10 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 11 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 12 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 13 ..... container     SUCCEEDED      1          1        0        0       0       0  
-Map 14 ......... container     SUCCEEDED      1          1        0        0       0       0  
-Reducer 15 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 4        container       RUNNING      1          0        1        0       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14 ..... container     SUCCEEDED      1          1        0        0       0       0  
 [2K----------------------------------------------------------------------------------------------
-[2K[31;1mVERTICES: 14/14  [==========================>>] 100%  ELAPSED TIME: 46.42 s    
+[2K[31;1mVERTICES: 12/13  [========================>>--] 92%   ELAPSED TIME: 23.64 s    
 [22;0m[2K----------------------------------------------------------------------------------------------
-INFO  : Completed executing command(queryId=hive_20261111125807_2dbad5a1-fe5c-4512-8c49-e1038cc446d3); Time taken: 49.057 seconds
+[19A[2K----------------------------------------------------------------------------------------------
+[2K[36;1m        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED  
+[22;0m[2K----------------------------------------------------------------------------------------------
+[2KMap 1 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 2 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 4 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 5 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 6 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 7 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 8 ...... container     SUCCEEDED      1          1        0        0       0       0  
+Map 9 .......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 10 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 11 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 12 ..... container     SUCCEEDED      1          1        0        0       0       0  
+Map 13 ......... container     SUCCEEDED      1          1        0        0       0       0  
+Reducer 14 ..... container     SUCCEEDED      1          1        0        0       0       0  
+[2K----------------------------------------------------------------------------------------------
+[2K[31;1mVERTICES: 13/13  [==========================>>] 100%  ELAPSED TIME: 23.91 s    
+[22;0m[2K----------------------------------------------------------------------------------------------
+INFO  : Completed executing command(queryId=hive_20261111141901_07cb4bfe-b022-448e-990f-945b4f3dc2c3); Time taken: 25.566 seconds
 campo	nulos
-discount	0
-profit	0
-order_id	0
 customer_name	0
-sales	0
+discount	0
 postal_code	0
 product_name	0
-7 rows selected (52.066 seconds)
-0: jdbc:hive2://localhost:10000> 
-0: jdbc:hive2://localhost:10000> -- Criterios de tratamiento (comentario para el informe):
-0: jdbc:hive2://localhost:10000> -- - row_id duplicado: quedarse con una fila (MIN/MAX) o rechazar carga
-0: jdbc:hive2://localhost:10000> -- - fechas invalidas o envio < pedido: excluir de analisis temporal o corregir
-0: jdbc:hive2://localhost:10000> -- - sales <= 0: revisar; en este sample no aparecen
-0: jdbc:hive2://localhost:10000> -- - discount fuera de 0-1: recortar o excluir
-0: jdbc:hive2://localhost:10000> -- - profit < 0: NO borrar; son perdidas reales y sirven para P6
+profit	0
+sales	0
+6 rows selected (26.985 seconds)
 0: jdbc:hive2://localhost:10000> 
 0: jdbc:hive2://localhost:10000> [WARN] Failed to create directory: /home/hive/.beeline
 No such file or directory

@@ -1,48 +1,110 @@
--- Examen 2do momento - Pregunta 1
--- Modelo y carga Superstore
--- Base/tabla: dbex_DEscalera.superstore_DEscalera
+-- Pregunta 1 - Modelo y carga
+-- Landing STRING + tabla analitica ORC tipada
+-- Base: dbex_DEscalera
 
 CREATE DATABASE IF NOT EXISTS dbex_DEscalera;
+USE dbex_DEscalera;
 
-DROP TABLE IF EXISTS dbex_DEscalera.superstore_DEscalera;
-
-CREATE TABLE dbex_DEscalera.superstore_DEscalera (
-  row_id         INT     COMMENT 'Identificador de fila del CSV original',
-  order_id       STRING  COMMENT 'Codigo de orden, ej. CA-2016-152156',
-  order_date     STRING  COMMENT 'Fecha pedido M/d/yyyy; se parsea en consultas',
-  ship_date      STRING  COMMENT 'Fecha envio M/d/yyyy',
-  ship_mode      STRING  COMMENT 'First Class, Second Class, Standard Class, Same Day',
-  customer_id    STRING  COMMENT 'Codigo cliente, ej. CG-12520',
-  customer_name  STRING  COMMENT 'Nombre completo del cliente',
-  segment        STRING  COMMENT 'Consumer, Corporate, Home Office',
-  country        STRING  COMMENT 'En este sample casi todo United States',
-  city           STRING  COMMENT 'Ciudad de envio',
-  state          STRING  COMMENT 'Estado de EE.UU.',
-  postal_code    INT     COMMENT 'Codigo postal',
-  region         STRING  COMMENT 'Central, East, South, West',
-  product_id     STRING  COMMENT 'Codigo producto, ej. FUR-BO-10001798',
-  category       STRING  COMMENT 'Furniture, Office Supplies, Technology',
-  sub_category   STRING  COMMENT 'Subcategoria dentro de category',
-  product_name   STRING  COMMENT 'Nombre; trae comas, por eso el archivo va con |',
-  sales          DOUBLE  COMMENT 'Importe de la linea',
-  quantity       INT     COMMENT 'Unidades vendidas',
-  discount       DOUBLE  COMMENT 'Descuento entre 0 y 1 (0% a 100%)',
-  profit         DOUBLE  COMMENT 'Ganancia de la linea; puede ser negativa'
+-- 1) Aterrizaje: todo texto, separador | (product_name trae comas)
+DROP TABLE IF EXISTS stg_superstore;
+CREATE TABLE stg_superstore (
+  row_id STRING,
+  order_id STRING,
+  order_date STRING,
+  ship_date STRING,
+  ship_mode STRING,
+  customer_id STRING,
+  customer_name STRING,
+  segment STRING,
+  country STRING,
+  city STRING,
+  state STRING,
+  postal_code STRING,
+  region STRING,
+  product_id STRING,
+  category STRING,
+  sub_category STRING,
+  product_name STRING,
+  sales STRING,
+  quantity STRING,
+  discount STRING,
+  profit STRING
 )
-COMMENT 'Sample Superstore (Kaggle). Separador | por product_name con comas'
+COMMENT 'Landing Superstore. STRING para revisar el CSV crudo'
 ROW FORMAT DELIMITED
 FIELDS TERMINATED BY '|'
 STORED AS TEXTFILE
 TBLPROPERTIES ('skip.header.line.count'='1');
 
--- El CSV se sube antes a HDFS:
--- docker cp datos/superstore_DEscalera.csv docker-hadoop-hive-parquet-namenode-1:/tmp/
--- docker exec docker-hadoop-hive-parquet-namenode-1 hdfs dfs -put -f /tmp/superstore_DEscalera.csv /tmp/
+-- 2) Analitica: tipos nativos + ORC
+DROP TABLE IF EXISTS superstore_DEscalera;
+CREATE TABLE superstore_DEscalera (
+  row_id INT COMMENT 'Id de fila del CSV',
+  order_id STRING,
+  order_date DATE COMMENT 'Pedido ya parseado',
+  ship_date DATE COMMENT 'Envio ya parseado',
+  ship_mode STRING,
+  customer_id STRING,
+  customer_name STRING,
+  segment STRING,
+  country STRING,
+  city STRING,
+  state STRING,
+  postal_code STRING COMMENT 'STRING para no perder el 0 de ZIP NE',
+  region STRING,
+  product_id STRING,
+  category STRING,
+  sub_category STRING,
+  product_name STRING,
+  sales DOUBLE,
+  quantity INT,
+  discount DOUBLE COMMENT 'Fraccion 0-1',
+  profit DOUBLE
+)
+COMMENT 'Tabla analitica Superstore ORC'
+STORED AS ORC
+TBLPROPERTIES ('orc.compress'='SNAPPY');
 
-LOAD DATA INPATH '/tmp/superstore_DEscalera.csv' OVERWRITE INTO TABLE dbex_DEscalera.superstore_DEscalera;
+-- Subir antes el CSV a HDFS /tmp/superstore_DEscalera.csv
+LOAD DATA INPATH '/tmp/superstore_DEscalera.csv' OVERWRITE INTO TABLE stg_superstore;
 
-DESCRIBE FORMATTED dbex_DEscalera.superstore_DEscalera;
+INSERT OVERWRITE TABLE superstore_DEscalera
+SELECT
+  CAST(row_id AS INT),
+  order_id,
+  TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(order_date, 'M/d/yyyy'))),
+  TO_DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(ship_date, 'M/d/yyyy'))),
+  ship_mode,
+  customer_id,
+  customer_name,
+  segment,
+  country,
+  city,
+  state,
+  LPAD(postal_code, 5, '0'),
+  region,
+  product_id,
+  category,
+  sub_category,
+  product_name,
+  CAST(sales AS DOUBLE),
+  CAST(quantity AS INT),
+  CAST(discount AS DOUBLE),
+  CAST(profit AS DOUBLE)
+FROM stg_superstore
+WHERE row_id IS NOT NULL AND TRIM(row_id) <> '' AND TRIM(row_id) <> 'row_id';
 
-SELECT * FROM dbex_DEscalera.superstore_DEscalera LIMIT 10;
+ANALYZE TABLE superstore_DEscalera COMPUTE STATISTICS;
 
-SELECT COUNT(*) AS total_registros FROM dbex_DEscalera.superstore_DEscalera;
+DESCRIBE FORMATTED superstore_DEscalera;
+
+SELECT * FROM superstore_DEscalera LIMIT 10;
+
+SELECT COUNT(*) AS total_registros FROM superstore_DEscalera;
+
+-- ZIP que venian con 4 digitos en el landing (antes del LPAD)
+SELECT state, COUNT(*) AS zip_4_digitos
+FROM stg_superstore
+WHERE LENGTH(TRIM(postal_code)) = 4
+GROUP BY state
+ORDER BY zip_4_digitos DESC;

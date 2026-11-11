@@ -1,15 +1,14 @@
--- Pregunta 3 - Evolucion comercial por region (CTE + ventanas)
-
+-- Pregunta 3 - Evolucion por region
 USE dbex_DEscalera;
 
 WITH anual AS (
   SELECT
     region,
-    YEAR(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'))) AS anio,
+    YEAR(order_date) AS anio,
     ROUND(SUM(sales), 2) AS ventas,
     ROUND(SUM(profit), 2) AS ganancia
   FROM superstore_DEscalera
-  GROUP BY region, YEAR(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy')))
+  GROUP BY region, YEAR(order_date)
 ),
 calc AS (
   SELECT
@@ -32,7 +31,6 @@ calc AS (
 SELECT * FROM calc
 ORDER BY region, anio;
 
--- Mejor y peor region por ganancia acumulada
 WITH tot AS (
   SELECT
     region,

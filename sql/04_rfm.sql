@@ -1,20 +1,16 @@
--- Pregunta 4 - Segmentacion RFM de clientes
-
+-- Pregunta 4 - RFM
+-- En riesgo = compraba (F alto) y ahora no vuelve (R malo)
 USE dbex_DEscalera;
 
 WITH params AS (
-  SELECT MAX(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd')) AS fecha_ref
-  FROM superstore_DEscalera
+  SELECT MAX(order_date) AS fecha_ref FROM superstore_DEscalera
 ),
 rfm_raw AS (
   SELECT
     s.customer_id,
     MAX(s.customer_name) AS customer_name,
     MAX(s.segment) AS segment,
-    DATEDIFF(
-      (SELECT fecha_ref FROM params),
-      MAX(from_unixtime(unix_timestamp(s.order_date, 'M/d/yyyy'), 'yyyy-MM-dd'))
-    ) AS recency,
+    DATEDIFF((SELECT fecha_ref FROM params), MAX(s.order_date)) AS recency,
     COUNT(DISTINCT s.order_id) AS frequency,
     ROUND(SUM(s.sales), 2) AS monetary
   FROM superstore_DEscalera s
@@ -28,8 +24,6 @@ scored AS (
     recency,
     frequency,
     monetary,
-    -- NTILE deja 1 en el primer bloque del ORDER BY.
-    -- Para que 5 sea lo mejor: recency alto primero (malo=1), freq/monto bajos primero (malo=1).
     NTILE(5) OVER (ORDER BY recency DESC) AS r_score,
     NTILE(5) OVER (ORDER BY frequency ASC) AS f_score,
     NTILE(5) OVER (ORDER BY monetary ASC) AS m_score
@@ -41,9 +35,10 @@ labeled AS (
     CONCAT(CAST(r_score AS STRING), CAST(f_score AS STRING), CAST(m_score AS STRING)) AS rfm_code,
     CASE
       WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Alto valor'
-      WHEN r_score >= 3 AND f_score >= 3 THEN 'Recurrente'
-      WHEN r_score <= 2 AND f_score <= 2 THEN 'En riesgo'
+      WHEN r_score >= 3 AND f_score >= 4 AND m_score >= 3 THEN 'Recurrente'
+      WHEN r_score <= 2 AND f_score >= 3 THEN 'En riesgo'
       WHEN r_score <= 2 AND m_score >= 4 THEN 'Dormido valioso'
+      WHEN r_score <= 2 AND f_score <= 2 THEN 'Inactivo'
       ELSE 'Regular'
     END AS segmento_rfm
   FROM scored
@@ -64,18 +59,13 @@ FROM labeled
 ORDER BY monetary DESC
 LIMIT 30;
 
--- Conteo por segmento
 WITH params AS (
-  SELECT MAX(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd')) AS fecha_ref
-  FROM superstore_DEscalera
+  SELECT MAX(order_date) AS fecha_ref FROM superstore_DEscalera
 ),
 rfm_raw AS (
   SELECT
     s.customer_id,
-    DATEDIFF(
-      (SELECT fecha_ref FROM params),
-      MAX(from_unixtime(unix_timestamp(s.order_date, 'M/d/yyyy'), 'yyyy-MM-dd'))
-    ) AS recency,
+    DATEDIFF((SELECT fecha_ref FROM params), MAX(s.order_date)) AS recency,
     COUNT(DISTINCT s.order_id) AS frequency,
     ROUND(SUM(s.sales), 2) AS monetary
   FROM superstore_DEscalera s
@@ -93,9 +83,10 @@ labeled AS (
   SELECT
     CASE
       WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Alto valor'
-      WHEN r_score >= 3 AND f_score >= 3 THEN 'Recurrente'
-      WHEN r_score <= 2 AND f_score <= 2 THEN 'En riesgo'
+      WHEN r_score >= 3 AND f_score >= 4 AND m_score >= 3 THEN 'Recurrente'
+      WHEN r_score <= 2 AND f_score >= 3 THEN 'En riesgo'
       WHEN r_score <= 2 AND m_score >= 4 THEN 'Dormido valioso'
+      WHEN r_score <= 2 AND f_score <= 2 THEN 'Inactivo'
       ELSE 'Regular'
     END AS segmento_rfm,
     monetary

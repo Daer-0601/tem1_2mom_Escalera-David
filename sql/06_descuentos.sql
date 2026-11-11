@@ -1,5 +1,4 @@
 -- Pregunta 6 - Impacto de descuentos
-
 USE dbex_DEscalera;
 
 WITH clasif AS (
@@ -34,20 +33,6 @@ ORDER BY
     ELSE 5
   END;
 
--- Categorias / subcategorias mas afectadas (solo descuento alto)
-WITH clasif AS (
-  SELECT
-    category,
-    sub_category,
-    discount,
-    sales,
-    profit,
-    CASE
-      WHEN discount > 0.50 THEN 'Descuento alto'
-      ELSE 'Otro'
-    END AS rango_dto
-  FROM superstore_DEscalera
-)
 SELECT
   category,
   sub_category,
@@ -56,8 +41,8 @@ SELECT
   ROUND(SUM(profit), 2) AS ganancia,
   SUM(CASE WHEN profit < 0 THEN 1 ELSE 0 END) AS con_perdida,
   ROUND(SUM(CASE WHEN profit < 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS pct_no_rentable
-FROM clasif
-WHERE rango_dto = 'Descuento alto'
+FROM superstore_DEscalera
+WHERE discount > 0.50
 GROUP BY category, sub_category
 ORDER BY pct_no_rentable DESC, con_perdida DESC
 LIMIT 15;
