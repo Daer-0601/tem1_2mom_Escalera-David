@@ -33,5 +33,6 @@ Run-SqlFile "sql\05_productos.sql" "p05_productos" | Out-Null
 Run-SqlFile "sql\06_descuentos.sql" "p06_descuentos" | Out-Null
 Run-SqlFile "sql\07_tendencias.sql" "p07_tendencias" | Out-Null
 Run-SqlFile "sql\08_pareto.sql" "p08_pareto" | Out-Null
+Run-SqlFile "sql\09_optimizacion.sql" "p09_optimizacion" | Out-Null
 
 Write-Host "LISTO"

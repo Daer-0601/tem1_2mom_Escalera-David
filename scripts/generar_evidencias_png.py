@@ -108,6 +108,7 @@ def main():
     from_file("p06_descuentos.txt", "ex-06-descuentos.png", "P6 - Impacto de descuentos", keep=35)
     from_file("p07_tendencias.txt", "ex-07-tendencias.png", "P7 - Tendencias mensuales", keep=40)
     from_file("p08_pareto.txt", "ex-08-pareto.png", "P8 - Pareto 80/20", keep=35)
+    from_file("p09_optimizacion.txt", "ex-09-optimizacion.png", "Optimizacion - ORC / particiones", keep=35)
     print("OK")
 
 

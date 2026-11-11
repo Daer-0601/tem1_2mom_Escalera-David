@@ -158,16 +158,17 @@ cuerpo(
     "En Hive 4 se consulta con Beeline, no con el CLI viejo. NameNode en 9870, HiveServer2 en 10000."
 )
 cuerpo(
-    "El CSV viene de Kaggle (Sample Superstore). El original traía encoding raro (cp1252) y Product Name con comas, "
-    "así que lo pasé a UTF-8 con separador |. Archivo de trabajo: datos/superstore_DEscalera.csv. "
-    "Base: dbex_DEscalera. Tabla: superstore_DEscalera. Cargaron 9994 filas."
+    "El CSV viene de Kaggle (Sample Superstore). Product Name trae comas, así que el archivo de trabajo va con separador |. "
+    "Base: dbex_DEscalera. Landing: stg_superstore (TEXTFILE). Analítica: superstore_DEscalera (ORC + Snappy). "
+    "Cargaron 9994 filas. También armé superstore_part particionada por anio."
 )
 evidencia("ex-00-docker.png", "Figura. Contenedores del stack en ejecución.")
 
 titulo("2. Diccionario de datos (resumen)")
 cuerpo(
-    "Dejé las fechas como STRING en formato M/d/yyyy porque al intentar DATE se rompían los días/meses de un dígito. "
-    "Discount está entre 0 y 1. Profit puede ser negativo. El detalle completo está en diccionario_datos.md del repo."
+    "En el landing todo queda STRING. En la analítica pasé fechas a DATE, números a DOUBLE/INT y postal_code a STRING "
+    "con LPAD a 5 dígitos (si fuera INT se pierde el cero de Nueva Inglaterra). "
+    "Detalle en diccionario_datos.md."
 )
 
 tabla = doc.add_table(rows=1, cols=3)
@@ -175,10 +176,10 @@ tabla.style = "Table Grid"
 for i, h in enumerate(["Campo", "Tipo Hive", "Nota"]):
     tabla.rows[0].cells[i].text = h
 filas = [
-    ("row_id", "INT", "Id de fila; sin duplicados en el sample"),
+    ("row_id", "INT", "Id de fila; sin duplicados"),
     ("order_id", "STRING", "Código de orden"),
-    ("order_date / ship_date", "STRING", "M/d/yyyy; se parsea en SQL"),
-    ("customer_id", "STRING", "Cliente"),
+    ("order_date / ship_date", "DATE", "Parseadas desde M/d/yyyy en la carga"),
+    ("postal_code", "STRING", "LPAD a 5; no INT"),
     ("region", "STRING", "Central, East, South, West"),
     ("category / sub_category", "STRING", "Clasificación de producto"),
     ("product_name", "STRING", "Trae comas → separador |"),
@@ -206,63 +207,57 @@ titulo("3. Desarrollo por pregunta")
 
 pregunta(1, "Diseño e implementación del modelo de datos")
 cuerpo(
-    "Estrategia: armar un CREATE TABLE con tipos razonables, skip del header y LOAD DATA desde HDFS. "
-    "Antes subí el CSV al namenode y lo metí en /tmp con hdfs dfs -put."
+    "Estrategia: landing STRING + analítica ORC tipada. LOAD DATA al staging y después INSERT con parseo de fechas y LPAD del ZIP."
 )
 codigo(
-    "CREATE TABLE dbex_DEscalera.superstore_DEscalera (\n"
-    "  row_id INT, order_id STRING, order_date STRING, ship_date STRING,\n"
-    "  ... sales DOUBLE, quantity INT, discount DOUBLE, profit DOUBLE\n"
-    ")\nROW FORMAT DELIMITED FIELDS TERMINATED BY '|'\n"
-    "STORED AS TEXTFILE\nTBLPROPERTIES ('skip.header.line.count'='1');\n\n"
-    "LOAD DATA INPATH '/tmp/superstore_DEscalera.csv'\n"
-    "OVERWRITE INTO TABLE dbex_DEscalera.superstore_DEscalera;\n\n"
-    "SELECT COUNT(*) AS total_registros FROM dbex_DEscalera.superstore_DEscalera;"
+    "CREATE TABLE stg_superstore (... STRING ...)\n"
+    "ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'\nSTORED AS TEXTFILE;\n\n"
+    "CREATE TABLE superstore_DEscalera (... order_date DATE, postal_code STRING, ...)\n"
+    "STORED AS ORC TBLPROPERTIES ('orc.compress'='SNAPPY');\n\n"
+    "LOAD DATA INPATH '/tmp/superstore_DEscalera.csv' OVERWRITE INTO TABLE stg_superstore;\n"
+    "INSERT OVERWRITE TABLE superstore_DEscalera\n"
+    "SELECT CAST(row_id AS INT), ..., TO_DATE(...), LPAD(postal_code,5,'0'), ...\n"
+    "FROM stg_superstore;\n"
+    "ANALYZE TABLE superstore_DEscalera COMPUTE STATISTICS;"
 )
 cuerpo(
-    "Resultado: 9994 registros. DESCRIBE FORMATTED confirma location en el warehouse de Hive. "
-    "Los primeros 10 registros coinciden con el CSV. Conclusión: el modelo aguanta el sample sin SerDe raro."
+    "Resultado: 9994 registros en ORC. En el landing hay 438 ZIP de 4 dígitos; en la analítica quedan a 5. "
+    "Conclusión: tipar en la carga evita pelear con fechas y ZIP en cada consulta."
 )
 evidencia("ex-01-carga.png", "Figura. Carga, muestra y conteo en Beeline.")
 
 pregunta(2, "Auditoría de calidad e integridad")
 cuerpo(
-    "Estrategia: una CTE que parsea fechas y un SELECT único con los conteos que pide el enunciado "
-    "(duplicados, nulos, sales<=0, descuento fuera de 0-1, envío antes del pedido, pérdidas)."
+    "Estrategia: resumen sobre la analítica tipada (duplicados, nulos, fechas, sales<=0, descuento fuera de 0-1, envío antes del pedido, pérdidas)."
 )
 codigo(
-    "WITH base AS (\n"
-    "  SELECT row_id, order_id, customer_id, sales, discount, profit,\n"
-    "    from_unixtime(unix_timestamp(order_date,'M/d/yyyy'),'yyyy-MM-dd') AS od,\n"
-    "    from_unixtime(unix_timestamp(ship_date,'M/d/yyyy'),'yyyy-MM-dd') AS sd\n"
-    f"  FROM {T}\n)\n"
     "SELECT COUNT(*) total_registros,\n"
     "  COUNT(*)-COUNT(DISTINCT row_id) row_id_duplicados,\n"
     "  COUNT(DISTINCT order_id) ordenes_unicas,\n"
     "  COUNT(DISTINCT customer_id) clientes_unicos,\n"
     "  SUM(CASE WHEN sales<=0 THEN 1 ELSE 0 END) ventas_le_cero,\n"
     "  SUM(CASE WHEN discount<0 OR discount>1 THEN 1 ELSE 0 END) descuento_fuera_rango,\n"
-    "  SUM(CASE WHEN sd<od THEN 1 ELSE 0 END) envio_antes_pedido,\n"
+    "  SUM(CASE WHEN ship_date<order_date THEN 1 ELSE 0 END) envio_antes_pedido,\n"
     "  SUM(CASE WHEN profit<0 THEN 1 ELSE 0 END) lineas_con_perdida\n"
-    "FROM base;"
+    f"FROM {T};"
 )
 cuerpo(
-    "Salió limpio: 0 duplicados de row_id, 5009 órdenes, 793 clientes, 0 nulos clave, 0 fechas inválidas, "
-    "0 envíos antes del pedido, 0 sales<=0 y 0 descuentos fuera de rango. Lo único fuerte son 1871 líneas con pérdida. "
-    "Tratamiento: no las borro; las uso en el análisis de descuentos. Si hubiera fechas imposibles, las sacaría del temporal."
+    "Salió limpio: 0 duplicados, 5009 órdenes, 793 clientes, 0 nulos clave, 0 fechas al revés, 0 sales<=0. "
+    "1871 líneas con pérdida (negocio, no basura). 438 ZIP cortados en el landing → LPAD. "
+    "Tratamiento: no borro pérdidas; normalizo ZIP."
 )
 evidencia("ex-02-calidad.png", "Figura. Resumen de calidad.")
 
 pregunta(3, "Evolución comercial por región")
 cuerpo(
-    "Estrategia: agregar ventas/ganancia por región y año, después LAG para la variación % y RANK para marcar mejor/peor."
+    "Estrategia: agregar ventas/ganancia por región y YEAR(order_date), después LAG y RANK."
 )
 codigo(
     "WITH anual AS (\n"
-    "  SELECT region, YEAR(from_unixtime(unix_timestamp(order_date,'M/d/yyyy'))) anio,\n"
+    "  SELECT region, YEAR(order_date) anio,\n"
     "         ROUND(SUM(sales),2) ventas, ROUND(SUM(profit),2) ganancia\n"
     f"  FROM {T}\n"
-    "  GROUP BY region, YEAR(from_unixtime(unix_timestamp(order_date,'M/d/yyyy')))\n"
+    "  GROUP BY region, YEAR(order_date)\n"
     ")\nSELECT region, anio, ventas, ganancia,\n"
     "  ROUND(ganancia/NULLIF(ventas,0)*100,2) margen_pct,\n"
     "  ROUND((ventas-LAG(ventas) OVER (PARTITION BY region ORDER BY anio))\n"
@@ -283,22 +278,17 @@ cuerpo(
 )
 codigo(
     "WITH rfm_raw AS (\n"
-    "  SELECT customer_id, MAX(customer_name) customer_name,\n"
-    "    DATEDIFF(fecha_ref, MAX(order_date_parsed)) recency,\n"
-    "    COUNT(DISTINCT order_id) frequency,\n"
-    "    ROUND(SUM(sales),2) monetary\n"
-    "  FROM ... GROUP BY customer_id\n), scored AS (\n"
-    "  SELECT *, NTILE(5) OVER (ORDER BY recency ASC) r_score,\n"
-    "         NTILE(5) OVER (ORDER BY frequency DESC) f_score,\n"
-    "         NTILE(5) OVER (ORDER BY monetary DESC) m_score\n"
-    "  FROM rfm_raw\n)\n"
-    "-- Alto valor: R,F,M >= 4 | Recurrente: R,F >= 3 | En riesgo: R,F <= 2"
+    "  SELECT customer_id, DATEDIFF(MAX(order_date) global, MAX(order_date)) recency,\n"
+    "    COUNT(DISTINCT order_id) frequency, ROUND(SUM(sales),2) monetary\n"
+    "  FROM superstore_DEscalera GROUP BY customer_id\n), scored AS (\n"
+    "  SELECT *, NTILE(5) OVER (ORDER BY recency DESC) r_score,\n"
+    "         NTILE(5) OVER (ORDER BY frequency ASC) f_score,\n"
+    "         NTILE(5) OVER (ORDER BY monetary ASC) m_score FROM rfm_raw\n)\n"
+    "-- Alto valor: R,F,M>=4 | En riesgo: R<=2 y F>=3 | Inactivo: R<=2 y F<=2"
 )
 cuerpo(
-    "Fecha de referencia: 2017-12-30. Entre los de mayor monetary aparecen Sean Miller, Tamara Chand, Raymond Buch. "
-    "Algunos tienen monetary alto pero recency grande (medio dormidos). "
-    "Justificación del corte: los quintiles se adaptan al dataset sin inventar umbrales raros. "
-    "Conclusión: RFM separa a quién retener y a quién reactivar mejor que mirar solo el total gastado."
+    "Fecha de referencia: 2017-12-30. En riesgo = compraba (F alto) y se enfrió (R malo). "
+    "Inactivo va aparte. Conclusión: RFM separa retención vs reactivación mejor que mirar solo el total gastado."
 )
 evidencia("ex-04-rfm.png", "Figura. Clientes RFM y conteo por segmento.")
 
@@ -380,19 +370,19 @@ evidencia("ex-08-pareto.png", "Figura. Corte 80% ventas/ganancias.")
 
 titulo("4. Optimización")
 cuerpo(
-    "Separador | evitó filas rotas por comas en product_name. Fechas en STRING + unix_timestamp solo donde hacía falta. "
-    "En P3/P7/P8 agrego primero y después aplico ventanas, para no arrastrar las 9994 filas en cada OVER. "
-    "Con este tamaño no hizo falta Parquet ni particiones; si creciera, particionaría por región/año."
+    "Landing + ORC/Snappy, ANALYZE TABLE para estadísticas, postal_code STRING + LPAD, fechas a DATE en la carga. "
+    "Particioné superstore_part por anio (sql/09_optimizacion.sql). En P3/P7/P8 agrego primero y después aplico ventanas."
 )
+evidencia("ex-09-optimizacion.png", "Figura. Stats ORC y partición por año.")
 
 titulo("5. Conclusiones")
 cuerpo(
-    "1) El sample entra bien a Hive si se limpia encoding y delimitador. "
-    "2) La calidad es alta; el tema real son las pérdidas ligadas a descuentos altos. "
+    "1) Landing + ORC deja el modelo usable sin casteos en cada pregunta. "
+    "2) La calidad es alta; el tema real son pérdidas y descuentos altos. "
     "3) West es la región más rentable; Central arrastra el margen más bajo. "
-    "4) RFM ayuda a priorizar retención/reactivación. "
+    "4) RFM separa alto valor, en riesgo e inactivos. "
     "5) Pareto (~22% de productos → ~80% del valor) confirma concentración. "
-    "6) En Hive 4 trabajé todo con Beeline y funciones de ventana."
+    "6) Stack Docker va en el repo; consultas con Beeline."
 )
 
 cuerpo(
