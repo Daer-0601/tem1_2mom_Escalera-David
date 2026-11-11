@@ -1,0 +1,353 @@
+﻿SLF4J: Class path contains multiple SLF4J bindings.
+Connecting to jdbc:hive2://localhost:10000
+Connected to: Apache Hive (version 4.0.1)
+Driver: Hive JDBC (version 4.0.1)
+Transaction isolation: TRANSACTION_REPEATABLE_READ
+No rows affected (0.377 seconds)
+. . . . . . . . . . . . . . . .>   SELECT MAX(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd')) AS fecha_ref
+. . . . . . . . . . . . . . . .>   FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .> ),
+. . . . . . . . . . . . . . . .> rfm_raw AS (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     s.customer_id,
+. . . . . . . . . . . . . . . .>     MAX(s.customer_name) AS customer_name,
+. . . . . . . . . . . . . . . .>     MAX(s.segment) AS segment,
+. . . . . . . . . . . . . . . .>     DATEDIFF(
+. . . . . . . . . . . . . . . .>       (SELECT fecha_ref FROM params),
+. . . . . . . . . . . . . . . .>       MAX(from_unixtime(unix_timestamp(s.order_date, 'M/d/yyyy'), 'yyyy-MM-dd'))
+. . . . . . . . . . . . . . . .>     ) AS recency,
+. . . . . . . . . . . . . . . .>     COUNT(DISTINCT s.order_id) AS frequency,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(s.sales), 2) AS monetary
+. . . . . . . . . . . . . . . .>   FROM superstore_DEscalera s
+. . . . . . . . . . . . . . . .>   GROUP BY s.customer_id
+. . . . . . . . . . . . . . . .> ),
+. . . . . . . . . . . . . . . .> scored AS (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     customer_id,
+. . . . . . . . . . . . . . . .>     customer_name,
+. . . . . . . . . . . . . . . .>     segment,
+. . . . . . . . . . . . . . . .>     recency,
+. . . . . . . . . . . . . . . .>     frequency,
+. . . . . . . . . . . . . . . .>     monetary,
+. . . . . . . . . . . . . . . .>     -- 5 = mejor. Recency bajo es mejor.
+. . . . . . . . . . . . . . . .>     NTILE(5) OVER (ORDER BY recency ASC) AS r_score,
+. . . . . . . . . . . . . . . .>     NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+. . . . . . . . . . . . . . . .>     NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
+. . . . . . . . . . . . . . . .>   FROM rfm_raw
+. . . . . . . . . . . . . . . .> ),
+. . . . . . . . . . . . . . . .> labeled AS (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     *,
+. . . . . . . . . . . . . . . .>     CONCAT(CAST(r_score AS STRING), CAST(f_score AS STRING), CAST(m_score AS STRING)) AS rfm_code,
+. . . . . . . . . . . . . . . .>     CASE
+. . . . . . . . . . . . . . . .>       WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Alto valor'
+. . . . . . . . . . . . . . . .>       WHEN r_score >= 3 AND f_score >= 3 THEN 'Recurrente'
+. . . . . . . . . . . . . . . .>       WHEN r_score <= 2 AND f_score <= 2 THEN 'En riesgo'
+. . . . . . . . . . . . . . . .>       WHEN r_score <= 2 AND m_score >= 4 THEN 'Dormido valioso'
+. . . . . . . . . . . . . . . .>       ELSE 'Regular'
+. . . . . . . . . . . . . . . .>     END AS segmento_rfm
+. . . . . . . . . . . . . . . .>   FROM scored
+. . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . .>   customer_id,
+. . . . . . . . . . . . . . . .>   customer_name,
+. . . . . . . . . . . . . . . .>   segment,
+. . . . . . . . . . . . . . . .>   recency,
+. . . . . . . . . . . . . . . .>   frequency,
+. . . . . . . . . . . . . . . .>   monetary,
+. . . . . . . . . . . . . . . .>   r_score,
+. . . . . . . . . . . . . . . .>   f_score,
+. . . . . . . . . . . . . . . .>   m_score,
+. . . . . . . . . . . . . . . .>   rfm_code,
+. . . . . . . . . . . . . . . .>   segmento_rfm
+. . . . . . . . . . . . . . . .> FROM labeled
+. . . . . . . . . . . . . . . .> ORDER BY monetary DESC
+. . . . . . . . . . . . . . . .> LIMIT 30;
+SELECT MAX(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd')) AS fecha_ref
+FROM superstore_DEscalera
+),
+rfm_raw AS (
+SELECT
+s.customer_id,
+MAX(s.customer_name) AS customer_name,
+MAX(s.segment) AS segment,
+DATEDIFF(
+(SELECT fecha_ref FROM params),
+MAX(from_unixtime(unix_timestamp(s.order_date, 'M/d/yyyy'), 'yyyy-MM-dd'))
+) AS recency,
+COUNT(DISTINCT s.order_id) AS frequency,
+ROUND(SUM(s.sales), 2) AS monetary
+FROM superstore_DEscalera s
+GROUP BY s.customer_id
+),
+scored AS (
+SELECT
+customer_id,
+customer_name,
+segment,
+recency,
+frequency,
+monetary,
+NTILE(5) OVER (ORDER BY recency ASC) AS r_score,
+NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
+FROM rfm_raw
+),
+labeled AS (
+SELECT
+*,
+CONCAT(CAST(r_score AS STRING), CAST(f_score AS STRING), CAST(m_score AS STRING)) AS rfm_code,
+CASE
+WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Alto valor'
+WHEN r_score >= 3 AND f_score >= 3 THEN 'Recurrente'
+WHEN r_score <= 2 AND f_score <= 2 THEN 'En riesgo'
+WHEN r_score <= 2 AND m_score >= 4 THEN 'Dormido valioso'
+ELSE 'Regular'
+END AS segmento_rfm
+FROM scored
+)
+SELECT
+customer_id,
+customer_name,
+segment,
+recency,
+frequency,
+monetary,
+r_score,
+f_score,
+m_score,
+rfm_code,
+segmento_rfm
+FROM labeled
+ORDER BY monetary DESC
+LIMIT 30
+SELECT MAX(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd')) AS fecha_ref
+FROM superstore_DEscalera
+),
+rfm_raw AS (
+SELECT
+s.customer_id,
+MAX(s.customer_name) AS customer_name,
+MAX(s.segment) AS segment,
+DATEDIFF(
+(SELECT fecha_ref FROM params),
+MAX(from_unixtime(unix_timestamp(s.order_date, 'M/d/yyyy'), 'yyyy-MM-dd'))
+) AS recency,
+COUNT(DISTINCT s.order_id) AS frequency,
+ROUND(SUM(s.sales), 2) AS monetary
+FROM superstore_DEscalera s
+GROUP BY s.customer_id
+),
+scored AS (
+SELECT
+customer_id,
+customer_name,
+segment,
+recency,
+frequency,
+monetary,
+NTILE(5) OVER (ORDER BY recency ASC) AS r_score,
+NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
+FROM rfm_raw
+),
+labeled AS (
+SELECT
+*,
+CONCAT(CAST(r_score AS STRING), CAST(f_score AS STRING), CAST(m_score AS STRING)) AS rfm_code,
+CASE
+WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Alto valor'
+WHEN r_score >= 3 AND f_score >= 3 THEN 'Recurrente'
+WHEN r_score <= 2 AND f_score <= 2 THEN 'En riesgo'
+WHEN r_score <= 2 AND m_score >= 4 THEN 'Dormido valioso'
+ELSE 'Regular'
+END AS segmento_rfm
+FROM scored
+)
+SELECT
+customer_id,
+customer_name,
+segment,
+recency,
+frequency,
+monetary,
+r_score,
+f_score,
+m_score,
+rfm_code,
+segmento_rfm
+FROM labeled
+ORDER BY monetary DESC
+LIMIT 30
+SELE......ary DESC
+LIMIT 30 (Stage-1)
+customer_id	customer_name	segment	recency	frequency	monetary	r_score	f_score	m_score	rfm_code	segmento_rfm
+SM-20320	Sean Miller	Home Office	79	5	25043.05	3	4	1	341	Recurrente
+TC-20980	Tamara Chand	Corporate	399	5	19052.22	5	4	1	541	Recurrente
+RB-19360	Raymond Buch	Consumer	96	6	15117.34	3	3	1	331	Recurrente
+TA-21385	Tom Ashbrook	Home Office	69	4	14595.62	3	5	1	351	Recurrente
+AB-10105	Adrian Barton	Consumer	41	10	14473.57	2	1	1	211	En riesgo
+KL-16645	Ken Lonsdale	Consumer	47	12	14175.23	2	1	1	211	En riesgo
+SC-20095	Sanjit Chand	Consumer	349	9	14142.33	5	1	1	511	Regular
+HL-15040	Hunter Lopez	Consumer	43	6	12873.3	2	3	1	231	Regular
+SE-20110	Sanjit Engle	Consumer	9	11	12209.44	1	1	1	111	En riesgo
+CC-12370	Christopher Conant	Consumer	43	5	12129.07	2	4	1	241	Regular
+TS-21370	Todd Sumrall	Corporate	36	6	11891.75	2	3	1	231	Regular
+GT-14710	Greg Tran	Consumer	36	11	11820.12	2	1	1	211	En riesgo
+BM-11140	Becky Martin	Consumer	307	4	11789.63	5	5	1	551	Recurrente
+SV-20365	Seth Vernon	Consumer	101	10	11470.95	3	1	1	311	Regular
+CJ-12010	Caroline Jumper	Consumer	189	8	11164.97	4	2	1	421	Regular
+CL-12565	Clay Ludtke	Consumer	284	12	10880.55	5	1	1	511	Regular
+ME-17320	Maria Etezadi	Home Office	42	10	10663.73	2	1	1	211	En riesgo
+KF-16285	Karen Ferguson	Home Office	97	7	10604.27	3	3	1	331	Recurrente
+BS-11365	Bill Shonely	Corporate	558	5	10501.65	5	4	1	541	Recurrente
+EH-13765	Edward Hooks	Corporate	135	12	10310.88	4	1	1	411	Regular
+JL-15835	John Lee	Consumer	21	11	9799.92	1	1	1	111	En riesgo
+GT-14635	Grant Thornton	Corporate	56	3	9351.21	3	5	1	351	Recurrente
+HW-14935	Helen Wasserman	Corporate	117	8	9300.25	4	2	1	421	Regular
+TB-21400	Tom Boeckenhauer	Consumer	202	7	9133.99	4	2	1	421	Regular
+PF-19120	Peter Fuller	Consumer	835	4	9062.86	5	5	1	551	Recurrente
+CM-12385	Christopher Martinez	Consumer	37	4	8954.02	2	5	1	251	Regular
+JD-16150	Justin Deggeller	Corporate	41	8	8828.03	2	2	1	221	En riesgo
+JE-15715	Joe Elijah	Consumer	46	10	8697.84	2	1	1	211	En riesgo
+LA-16780	Laura Armstrong	Corporate	154	11	8673.22	4	1	1	411	Regular
+PK-19075	Pete Kriz	Consumer	9	12	8646.93	1	1	1	111	En riesgo
+30 rows selected (26.713 seconds)
+. . . . . . . . . . . . . . . .>   SELECT MAX(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd')) AS fecha_ref
+. . . . . . . . . . . . . . . .>   FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .> ),
+. . . . . . . . . . . . . . . .> rfm_raw AS (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     s.customer_id,
+. . . . . . . . . . . . . . . .>     DATEDIFF(
+. . . . . . . . . . . . . . . .>       (SELECT fecha_ref FROM params),
+. . . . . . . . . . . . . . . .>       MAX(from_unixtime(unix_timestamp(s.order_date, 'M/d/yyyy'), 'yyyy-MM-dd'))
+. . . . . . . . . . . . . . . .>     ) AS recency,
+. . . . . . . . . . . . . . . .>     COUNT(DISTINCT s.order_id) AS frequency,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(s.sales), 2) AS monetary
+. . . . . . . . . . . . . . . .>   FROM superstore_DEscalera s
+. . . . . . . . . . . . . . . .>   GROUP BY s.customer_id
+. . . . . . . . . . . . . . . .> ),
+. . . . . . . . . . . . . . . .> scored AS (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     *,
+. . . . . . . . . . . . . . . .>     NTILE(5) OVER (ORDER BY recency ASC) AS r_score,
+. . . . . . . . . . . . . . . .>     NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+. . . . . . . . . . . . . . . .>     NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
+. . . . . . . . . . . . . . . .>   FROM rfm_raw
+. . . . . . . . . . . . . . . .> ),
+. . . . . . . . . . . . . . . .> labeled AS (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     CASE
+. . . . . . . . . . . . . . . .>       WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Alto valor'
+. . . . . . . . . . . . . . . .>       WHEN r_score >= 3 AND f_score >= 3 THEN 'Recurrente'
+. . . . . . . . . . . . . . . .>       WHEN r_score <= 2 AND f_score <= 2 THEN 'En riesgo'
+. . . . . . . . . . . . . . . .>       WHEN r_score <= 2 AND m_score >= 4 THEN 'Dormido valioso'
+. . . . . . . . . . . . . . . .>       ELSE 'Regular'
+. . . . . . . . . . . . . . . .>     END AS segmento_rfm,
+. . . . . . . . . . . . . . . .>     monetary
+. . . . . . . . . . . . . . . .>   FROM scored
+. . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . .>   segmento_rfm,
+. . . . . . . . . . . . . . . .>   COUNT(*) AS clientes,
+. . . . . . . . . . . . . . . .>   ROUND(AVG(monetary), 2) AS ticket_medio,
+. . . . . . . . . . . . . . . .>   ROUND(SUM(monetary), 2) AS ventas_segmento
+. . . . . . . . . . . . . . . .> FROM labeled
+. . . . . . . . . . . . . . . .> GROUP BY segmento_rfm
+. . . . . . . . . . . . . . . .> ORDER BY ventas_segmento DESC;
+SELECT MAX(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd')) AS fecha_ref
+FROM superstore_DEscalera
+),
+rfm_raw AS (
+SELECT
+s.customer_id,
+DATEDIFF(
+(SELECT fecha_ref FROM params),
+MAX(from_unixtime(unix_timestamp(s.order_date, 'M/d/yyyy'), 'yyyy-MM-dd'))
+) AS recency,
+COUNT(DISTINCT s.order_id) AS frequency,
+ROUND(SUM(s.sales), 2) AS monetary
+FROM superstore_DEscalera s
+GROUP BY s.customer_id
+),
+scored AS (
+SELECT
+*,
+NTILE(5) OVER (ORDER BY recency ASC) AS r_score,
+NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
+FROM rfm_raw
+),
+labeled AS (
+SELECT
+CASE
+WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Alto valor'
+WHEN r_score >= 3 AND f_score >= 3 THEN 'Recurrente'
+WHEN r_score <= 2 AND f_score <= 2 THEN 'En riesgo'
+WHEN r_score <= 2 AND m_score >= 4 THEN 'Dormido valioso'
+ELSE 'Regular'
+END AS segmento_rfm,
+monetary
+FROM scored
+)
+SELECT
+segmento_rfm,
+COUNT(*) AS clientes,
+ROUND(AVG(monetary), 2) AS ticket_medio,
+ROUND(SUM(monetary), 2) AS ventas_segmento
+FROM labeled
+GROUP BY segmento_rfm
+ORDER BY ventas_segmento DESC
+SELECT MAX(from_unixtime(unix_timestamp(order_date, 'M/d/yyyy'), 'yyyy-MM-dd')) AS fecha_ref
+FROM superstore_DEscalera
+),
+rfm_raw AS (
+SELECT
+s.customer_id,
+DATEDIFF(
+(SELECT fecha_ref FROM params),
+MAX(from_unixtime(unix_timestamp(s.order_date, 'M/d/yyyy'), 'yyyy-MM-dd'))
+) AS recency,
+COUNT(DISTINCT s.order_id) AS frequency,
+ROUND(SUM(s.sales), 2) AS monetary
+FROM superstore_DEscalera s
+GROUP BY s.customer_id
+),
+scored AS (
+SELECT
+*,
+NTILE(5) OVER (ORDER BY recency ASC) AS r_score,
+NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
+FROM rfm_raw
+),
+labeled AS (
+SELECT
+CASE
+WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Alto valor'
+WHEN r_score >= 3 AND f_score >= 3 THEN 'Recurrente'
+WHEN r_score <= 2 AND f_score <= 2 THEN 'En riesgo'
+WHEN r_score <= 2 AND m_score >= 4 THEN 'Dormido valioso'
+ELSE 'Regular'
+END AS segmento_rfm,
+monetary
+FROM scored
+)
+SELECT
+segmento_rfm,
+COUNT(*) AS clientes,
+ROUND(AVG(monetary), 2) AS ticket_medio,
+ROUND(SUM(monetary), 2) AS ventas_segmento
+FROM labeled
+GROUP BY segmento_rfm
+ORDER BY ventas_segmento DESC
+SELE......tas_segmento DESC (Stage-1)
+segmento_rfm	clientes	ticket_medio	ventas_segmento
+Regular	203	3917.2	795190.61
+En riesgo	182	3912.12	712006.23
+Recurrente	217	2926.08	634959.14
+Alto valor	122	794.14	96884.79
+Dormido valioso	69	842.9	58160.2
+5 rows selected (24.025 seconds)
+No such file or directory

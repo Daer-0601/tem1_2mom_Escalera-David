@@ -1,0 +1,789 @@
+{
+  "total": 9994,
+  "ordenes": 5009,
+  "clientes": 793,
+  "productos": 1862,
+  "fecha_min": "2014-01-03",
+  "fecha_max": "2017-12-30",
+  "ventas_tot": 2297200.86,
+  "ganancia_tot": 286397.02,
+  "perdidas": 1871,
+  "dup_row": 0,
+  "ventas_le0": 0,
+  "dto_fuera": 0,
+  "envio_antes": 0,
+  "region_anio": [
+    {
+      "region": "Central",
+      "anio": 2014,
+      "ventas": 103838.16,
+      "ganancia": 539.55,
+      "margen": 0.52
+    },
+    {
+      "region": "Central",
+      "anio": 2015,
+      "ventas": 102874.22,
+      "ganancia": 11716.8,
+      "margen": 11.39
+    },
+    {
+      "region": "Central",
+      "anio": 2016,
+      "ventas": 147429.38,
+      "ganancia": 19899.16,
+      "margen": 13.5
+    },
+    {
+      "region": "Central",
+      "anio": 2017,
+      "ventas": 147098.13,
+      "ganancia": 7550.84,
+      "margen": 5.13
+    },
+    {
+      "region": "East",
+      "anio": 2014,
+      "ventas": 128680.46,
+      "ganancia": 17059.61,
+      "margen": 13.26
+    },
+    {
+      "region": "East",
+      "anio": 2015,
+      "ventas": 156332.06,
+      "ganancia": 21091.01,
+      "margen": 13.49
+    },
+    {
+      "region": "East",
+      "anio": 2016,
+      "ventas": 180685.82,
+      "ganancia": 20141.6,
+      "margen": 11.15
+    },
+    {
+      "region": "East",
+      "anio": 2017,
+      "ventas": 213082.9,
+      "ganancia": 33230.56,
+      "margen": 15.6
+    },
+    {
+      "region": "South",
+      "anio": 2014,
+      "ventas": 103845.84,
+      "ganancia": 11879.12,
+      "margen": 11.44
+    },
+    {
+      "region": "South",
+      "anio": 2015,
+      "ventas": 71359.98,
+      "ganancia": 8318.59,
+      "margen": 11.66
+    },
+    {
+      "region": "South",
+      "anio": 2016,
+      "ventas": 93610.22,
+      "ganancia": 17702.81,
+      "margen": 18.91
+    },
+    {
+      "region": "South",
+      "anio": 2017,
+      "ventas": 122905.86,
+      "ganancia": 8848.91,
+      "margen": 7.2
+    },
+    {
+      "region": "West",
+      "anio": 2014,
+      "ventas": 147883.03,
+      "ganancia": 20065.69,
+      "margen": 13.57
+    },
+    {
+      "region": "West",
+      "anio": 2015,
+      "ventas": 139966.25,
+      "ganancia": 20492.19,
+      "margen": 14.64
+    },
+    {
+      "region": "West",
+      "anio": 2016,
+      "ventas": 187480.18,
+      "ganancia": 24051.61,
+      "margen": 12.83
+    },
+    {
+      "region": "West",
+      "anio": 2017,
+      "ventas": 250128.37,
+      "ganancia": 43808.96,
+      "margen": 17.51
+    }
+  ],
+  "mejor_region": "West",
+  "peor_region": "Central",
+  "top_rfm": [
+    {
+      "id": "SM-20320",
+      "name": "Sean Miller",
+      "recency": 79,
+      "frequency": 5,
+      "monetary": 25043.05
+    },
+    {
+      "id": "TC-20980",
+      "name": "Tamara Chand",
+      "recency": 399,
+      "frequency": 5,
+      "monetary": 19052.22
+    },
+    {
+      "id": "RB-19360",
+      "name": "Raymond Buch",
+      "recency": 96,
+      "frequency": 6,
+      "monetary": 15117.34
+    },
+    {
+      "id": "TA-21385",
+      "name": "Tom Ashbrook",
+      "recency": 69,
+      "frequency": 4,
+      "monetary": 14595.62
+    },
+    {
+      "id": "AB-10105",
+      "name": "Adrian Barton",
+      "recency": 41,
+      "frequency": 10,
+      "monetary": 14473.57
+    },
+    {
+      "id": "KL-16645",
+      "name": "Ken Lonsdale",
+      "recency": 47,
+      "frequency": 12,
+      "monetary": 14175.23
+    },
+    {
+      "id": "SC-20095",
+      "name": "Sanjit Chand",
+      "recency": 349,
+      "frequency": 9,
+      "monetary": 14142.33
+    },
+    {
+      "id": "HL-15040",
+      "name": "Hunter Lopez",
+      "recency": 43,
+      "frequency": 6,
+      "monetary": 12873.3
+    },
+    {
+      "id": "SE-20110",
+      "name": "Sanjit Engle",
+      "recency": 9,
+      "frequency": 11,
+      "monetary": 12209.44
+    },
+    {
+      "id": "CC-12370",
+      "name": "Christopher Conant",
+      "recency": 43,
+      "frequency": 5,
+      "monetary": 12129.07
+    }
+  ],
+  "descuentos": {
+    "Sin descuento": {
+      "n": 4798,
+      "ventas": 1087908.47,
+      "ganancia": 320987.6,
+      "margen": 29.51,
+      "pct_perd": 0.0,
+      "dto_prom": 0.0
+    },
+    "Descuento medio": {
+      "n": 537,
+      "ventas": 298541.41,
+      "ganancia": -58817.0,
+      "margen": -19.7,
+      "pct_perd": 91.62,
+      "dto_prom": 36.7
+    },
+    "Descuento bajo": {
+      "n": 3803,
+      "ventas": 846522.24,
+      "ganancia": 100785.47,
+      "margen": 11.91,
+      "pct_perd": 13.75,
+      "dto_prom": 19.68
+    },
+    "Descuento alto": {
+      "n": 856,
+      "ventas": 64228.74,
+      "ganancia": -76559.05,
+      "margen": -119.2,
+      "pct_perd": 100.0,
+      "dto_prom": 71.89
+    }
+  },
+  "meses": [
+    {
+      "anio": 2014,
+      "mes": 1,
+      "ventas": 14236.89,
+      "ganancia": 2450.19
+    },
+    {
+      "anio": 2014,
+      "mes": 2,
+      "ventas": 4519.89,
+      "ganancia": 862.31
+    },
+    {
+      "anio": 2014,
+      "mes": 3,
+      "ventas": 55691.01,
+      "ganancia": 498.73
+    },
+    {
+      "anio": 2014,
+      "mes": 4,
+      "ventas": 28295.34,
+      "ganancia": 3488.84
+    },
+    {
+      "anio": 2014,
+      "mes": 5,
+      "ventas": 23648.29,
+      "ganancia": 2738.71
+    },
+    {
+      "anio": 2014,
+      "mes": 6,
+      "ventas": 34595.13,
+      "ganancia": 4976.52
+    },
+    {
+      "anio": 2014,
+      "mes": 7,
+      "ventas": 33946.39,
+      "ganancia": -841.48
+    },
+    {
+      "anio": 2014,
+      "mes": 8,
+      "ventas": 27909.47,
+      "ganancia": 5318.1
+    },
+    {
+      "anio": 2014,
+      "mes": 9,
+      "ventas": 81777.35,
+      "ganancia": 8328.1
+    },
+    {
+      "anio": 2014,
+      "mes": 10,
+      "ventas": 31453.39,
+      "ganancia": 3448.26
+    },
+    {
+      "anio": 2014,
+      "mes": 11,
+      "ventas": 78628.72,
+      "ganancia": 9292.13
+    },
+    {
+      "anio": 2014,
+      "mes": 12,
+      "ventas": 69545.62,
+      "ganancia": 8983.57
+    },
+    {
+      "anio": 2015,
+      "mes": 1,
+      "ventas": 18174.08,
+      "ganancia": -3281.01
+    },
+    {
+      "anio": 2015,
+      "mes": 2,
+      "ventas": 11951.41,
+      "ganancia": 2813.85
+    },
+    {
+      "anio": 2015,
+      "mes": 3,
+      "ventas": 38726.25,
+      "ganancia": 9732.1
+    },
+    {
+      "anio": 2015,
+      "mes": 4,
+      "ventas": 34195.21,
+      "ganancia": 4187.5
+    },
+    {
+      "anio": 2015,
+      "mes": 5,
+      "ventas": 30131.69,
+      "ganancia": 4667.87
+    },
+    {
+      "anio": 2015,
+      "mes": 6,
+      "ventas": 24797.29,
+      "ganancia": 3335.56
+    },
+    {
+      "anio": 2015,
+      "mes": 7,
+      "ventas": 28765.32,
+      "ganancia": 3288.65
+    },
+    {
+      "anio": 2015,
+      "mes": 8,
+      "ventas": 36898.33,
+      "ganancia": 5355.81
+    },
+    {
+      "anio": 2015,
+      "mes": 9,
+      "ventas": 64595.92,
+      "ganancia": 8209.16
+    },
+    {
+      "anio": 2015,
+      "mes": 10,
+      "ventas": 31404.92,
+      "ganancia": 2817.37
+    },
+    {
+      "anio": 2015,
+      "mes": 11,
+      "ventas": 75972.56,
+      "ganancia": 12474.79
+    },
+    {
+      "anio": 2015,
+      "mes": 12,
+      "ventas": 74919.52,
+      "ganancia": 8016.97
+    },
+    {
+      "anio": 2016,
+      "mes": 1,
+      "ventas": 18542.49,
+      "ganancia": 2824.82
+    },
+    {
+      "anio": 2016,
+      "mes": 2,
+      "ventas": 22978.82,
+      "ganancia": 5004.58
+    },
+    {
+      "anio": 2016,
+      "mes": 3,
+      "ventas": 51715.88,
+      "ganancia": 3611.97
+    },
+    {
+      "anio": 2016,
+      "mes": 4,
+      "ventas": 38750.04,
+      "ganancia": 2977.81
+    },
+    {
+      "anio": 2016,
+      "mes": 5,
+      "ventas": 56987.73,
+      "ganancia": 8662.15
+    },
+    {
+      "anio": 2016,
+      "mes": 6,
+      "ventas": 40344.53,
+      "ganancia": 4750.38
+    },
+    {
+      "anio": 2016,
+      "mes": 7,
+      "ventas": 39261.96,
+      "ganancia": 4432.88
+    },
+    {
+      "anio": 2016,
+      "mes": 8,
+      "ventas": 31115.37,
+      "ganancia": 2062.07
+    },
+    {
+      "anio": 2016,
+      "mes": 9,
+      "ventas": 73410.02,
+      "ganancia": 9328.66
+    },
+    {
+      "anio": 2016,
+      "mes": 10,
+      "ventas": 59687.75,
+      "ganancia": 16243.14
+    },
+    {
+      "anio": 2016,
+      "mes": 11,
+      "ventas": 79411.97,
+      "ganancia": 4011.41
+    },
+    {
+      "anio": 2016,
+      "mes": 12,
+      "ventas": 96999.04,
+      "ganancia": 17885.31
+    },
+    {
+      "anio": 2017,
+      "mes": 1,
+      "ventas": 43971.37,
+      "ganancia": 7140.44
+    },
+    {
+      "anio": 2017,
+      "mes": 2,
+      "ventas": 20301.13,
+      "ganancia": 1613.87
+    },
+    {
+      "anio": 2017,
+      "mes": 3,
+      "ventas": 58872.35,
+      "ganancia": 14751.89
+    },
+    {
+      "anio": 2017,
+      "mes": 4,
+      "ventas": 36521.54,
+      "ganancia": 933.29
+    },
+    {
+      "anio": 2017,
+      "mes": 5,
+      "ventas": 44261.11,
+      "ganancia": 6342.58
+    },
+    {
+      "anio": 2017,
+      "mes": 6,
+      "ventas": 52981.73,
+      "ganancia": 8223.34
+    },
+    {
+      "anio": 2017,
+      "mes": 7,
+      "ventas": 45264.42,
+      "ganancia": 6952.62
+    },
+    {
+      "anio": 2017,
+      "mes": 8,
+      "ventas": 63120.89,
+      "ganancia": 9040.96
+    },
+    {
+      "anio": 2017,
+      "mes": 9,
+      "ventas": 87866.65,
+      "ganancia": 10991.56
+    },
+    {
+      "anio": 2017,
+      "mes": 10,
+      "ventas": 77776.92,
+      "ganancia": 9275.28
+    },
+    {
+      "anio": 2017,
+      "mes": 11,
+      "ventas": 118447.83,
+      "ganancia": 9690.1
+    },
+    {
+      "anio": 2017,
+      "mes": 12,
+      "ventas": 83829.32,
+      "ganancia": 8483.35
+    }
+  ],
+  "top3_meses": [
+    {
+      "anio": 2017,
+      "mes": 11,
+      "ventas": 118447.83,
+      "ganancia": 9690.1
+    },
+    {
+      "anio": 2016,
+      "mes": 12,
+      "ventas": 96999.04,
+      "ganancia": 17885.31
+    },
+    {
+      "anio": 2017,
+      "mes": 9,
+      "ventas": 87866.65,
+      "ganancia": 10991.56
+    }
+  ],
+  "bottom3_meses": [
+    {
+      "anio": 2014,
+      "mes": 2,
+      "ventas": 4519.89,
+      "ganancia": 862.31
+    },
+    {
+      "anio": 2015,
+      "mes": 2,
+      "ventas": 11951.41,
+      "ganancia": 2813.85
+    },
+    {
+      "anio": 2014,
+      "mes": 1,
+      "ventas": 14236.89,
+      "ganancia": 2450.19
+    }
+  ],
+  "pareto_ventas": {
+    "n": 414,
+    "total": 1862,
+    "pct": 22.23
+  },
+  "pareto_ganancia": {
+    "n": 340,
+    "total": 1558,
+    "pct": 21.82
+  },
+  "top5_ventas": [
+    {
+      "id": "TEC-CO-10004722",
+      "name": "Canon imageCLASS 2200 Advanced Copier",
+      "cat": "Technology",
+      "ventas": 61599.82,
+      "ganancia": 25199.93,
+      "margen": 40.91
+    },
+    {
+      "id": "OFF-BI-10003527",
+      "name": "Fellowes PB500 Electric Punch Plastic Comb Binding Machine with Manual Bind",
+      "cat": "Office Supplies",
+      "ventas": 27453.38,
+      "ganancia": 7753.04,
+      "margen": 28.24
+    },
+    {
+      "id": "TEC-MA-10002412",
+      "name": "Cisco TelePresence System EX90 Videoconferencing Unit",
+      "cat": "Technology",
+      "ventas": 22638.48,
+      "ganancia": -1811.08,
+      "margen": -8.0
+    },
+    {
+      "id": "FUR-CH-10002024",
+      "name": "HON 5400 Series Task Chairs for Big and Tall",
+      "cat": "Furniture",
+      "ventas": 21870.58,
+      "ganancia": 0.0,
+      "margen": 0.0
+    },
+    {
+      "id": "OFF-BI-10001359",
+      "name": "GBC DocuBind TL300 Electric Binding System",
+      "cat": "Office Supplies",
+      "ventas": 19823.48,
+      "ganancia": 2233.51,
+      "margen": 11.27
+    }
+  ],
+  "peor5_margen": [
+    {
+      "id": "OFF-AP-10002203",
+      "name": "Eureka Disposable Bags for Sanitaire Vibra Groomer I Upright Vac",
+      "cat": "Office Supplies",
+      "ventas": 1.62,
+      "ganancia": -4.47,
+      "margen": -275.0
+    },
+    {
+      "id": "FUR-BO-10001567",
+      "name": "Bush Westfield Collection Bookcases, Dark Cherry Finish, Fully Assembled",
+      "cat": "Furniture",
+      "ventas": 90.88,
+      "ganancia": -190.85,
+      "margen": -210.0
+    },
+    {
+      "id": "OFF-AP-10000390",
+      "name": "Euro Pro Shark Stick Mini Vacuum",
+      "cat": "Office Supplies",
+      "ventas": 170.74,
+      "ganancia": -325.63,
+      "margen": -190.71
+    },
+    {
+      "id": "TEC-MA-10003337",
+      "name": "Okidata B401 Printer",
+      "cat": "Technology",
+      "ventas": 179.99,
+      "ganancia": -251.99,
+      "margen": -140.0
+    },
+    {
+      "id": "TEC-MA-10001695",
+      "name": "Zebra GK420t Direct Thermal/Thermal Transfer Printer",
+      "cat": "Technology",
+      "ventas": 703.71,
+      "ganancia": -938.28,
+      "margen": -133.33
+    }
+  ],
+  "top5_ganancia_cat": {
+    "Technology": [
+      {
+        "id": "TEC-CO-10004722",
+        "name": "Canon imageCLASS 2200 Advanced Copier",
+        "cat": "Technology",
+        "ventas": 61599.82,
+        "ganancia": 25199.93,
+        "margen": 40.91
+      },
+      {
+        "id": "TEC-CO-10001449",
+        "name": "Hewlett Packard LaserJet 3310 Copier",
+        "cat": "Technology",
+        "ventas": 18839.69,
+        "ganancia": 6983.88,
+        "margen": 37.07
+      },
+      {
+        "id": "TEC-CO-10003763",
+        "name": "Canon PC1060 Personal Laser Copier",
+        "cat": "Technology",
+        "ventas": 11619.83,
+        "ganancia": 4570.93,
+        "margen": 39.34
+      },
+      {
+        "id": "TEC-AC-10002049",
+        "name": "Plantronics Savi W720 Multi-Device Wireless Headset System",
+        "cat": "Technology",
+        "ventas": 13756.54,
+        "ganancia": 4425.34,
+        "margen": 32.17
+      },
+      {
+        "id": "TEC-MA-10001127",
+        "name": "HP Designjet T520 Inkjet Large Format Printer - 24\" Color",
+        "cat": "Technology",
+        "ventas": 18374.9,
+        "ganancia": 4094.98,
+        "margen": 22.29
+      }
+    ],
+    "Office Supplies": [
+      {
+        "id": "OFF-BI-10003527",
+        "name": "Fellowes PB500 Electric Punch Plastic Comb Binding Machine with Manual Bind",
+        "cat": "Office Supplies",
+        "ventas": 27453.38,
+        "ganancia": 7753.04,
+        "margen": 28.24
+      },
+      {
+        "id": "OFF-BI-10001120",
+        "name": "Ibico EPK-21 Electric Binding System",
+        "cat": "Office Supplies",
+        "ventas": 15875.92,
+        "ganancia": 3345.28,
+        "margen": 21.07
+      },
+      {
+        "id": "OFF-AP-10002945",
+        "name": "Honeywell Enviracaire Portable HEPA Air Cleaner for 17' x 22' Room",
+        "cat": "Office Supplies",
+        "ventas": 11304.44,
+        "ganancia": 3247.02,
+        "margen": 28.72
+      },
+      {
+        "id": "OFF-BI-10003925",
+        "name": "Fellowes PB300 Plastic Comb Binding Machine",
+        "cat": "Office Supplies",
+        "ventas": 8070.19,
+        "ganancia": 2518.06,
+        "margen": 31.2
+      },
+      {
+        "id": "OFF-BI-10004600",
+        "name": "Ibico Ibimaster 300 Manual Binding System",
+        "cat": "Office Supplies",
+        "ventas": 7985.38,
+        "ganancia": 2318.34,
+        "margen": 29.03
+      }
+    ],
+    "Furniture": [
+      {
+        "id": "FUR-CH-10000454",
+        "name": "Hon Deluxe Fabric Upholstered Stacking Chairs, Rounded Back",
+        "cat": "Furniture",
+        "ventas": 10637.53,
+        "ganancia": 1927.44,
+        "margen": 18.12
+      },
+      {
+        "id": "FUR-CH-10004063",
+        "name": "Global Deluxe High-Back Manager's Chair",
+        "cat": "Furniture",
+        "ventas": 8665.19,
+        "ganancia": 1558.59,
+        "margen": 17.99
+      },
+      {
+        "id": "FUR-CH-10002320",
+        "name": "Hon Pagoda Stacking Chairs",
+        "cat": "Furniture",
+        "ventas": 6483.8,
+        "ganancia": 1540.7,
+        "margen": 23.76
+      },
+      {
+        "id": "FUR-CH-10004086",
+        "name": "Hon 4070 Series Pagoda Armless Upholstered Stacking Chairs",
+        "cat": "Furniture",
+        "ventas": 8431.0,
+        "ganancia": 1388.63,
+        "margen": 16.47
+      },
+      {
+        "id": "FUR-CH-10001854",
+        "name": "Office Star - Professional Matrix Back Chair with 2-to-1 Synchro Tilt and Mesh Fabric Seat",
+        "cat": "Furniture",
+        "ventas": 8774.5,
+        "ganancia": 1305.65,
+        "margen": 14.88
+      }
+    ]
+  }
+}

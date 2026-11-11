@@ -1,0 +1,258 @@
+﻿SLF4J: Class path contains multiple SLF4J bindings.
+Connecting to jdbc:hive2://localhost:10000
+Connected to: Apache Hive (version 4.0.1)
+Driver: Hive JDBC (version 4.0.1)
+Transaction isolation: TRANSACTION_REPEATABLE_READ
+No rows affected (0.248 seconds)
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     category,
+. . . . . . . . . . . . . . . .>     product_id,
+. . . . . . . . . . . . . . . .>     MAX(product_name) AS product_name,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(sales), 2) AS ventas,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(profit), 2) AS ganancia,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct
+. . . . . . . . . . . . . . . .>   FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .>   GROUP BY category, product_id
+. . . . . . . . . . . . . . . .> ),
+. . . . . . . . . . . . . . . .> ranked AS (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     category,
+. . . . . . . . . . . . . . . .>     product_id,
+. . . . . . . . . . . . . . . .>     product_name,
+. . . . . . . . . . . . . . . .>     ventas,
+. . . . . . . . . . . . . . . .>     ganancia,
+. . . . . . . . . . . . . . . .>     margen_pct,
+. . . . . . . . . . . . . . . .>     RANK() OVER (PARTITION BY category ORDER BY ganancia DESC) AS rank_ganancia_cat,
+. . . . . . . . . . . . . . . .>     DENSE_RANK() OVER (ORDER BY ventas DESC) AS dense_rank_ventas_global,
+. . . . . . . . . . . . . . . .>     RANK() OVER (PARTITION BY category ORDER BY margen_pct ASC) AS rank_peor_margen_cat,
+. . . . . . . . . . . . . . . .>     SUM(ganancia) OVER (PARTITION BY category ORDER BY ganancia DESC
+. . . . . . . . . . . . . . . .>       ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ganancia_acum_cat
+. . . . . . . . . . . . . . . .>   FROM prod
+. . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . .> -- Top 5 por ganancia dentro de cada categoria
+. . . . . . . . . . . . . . . .> SELECT *
+. . . . . . . . . . . . . . . .> FROM ranked
+. . . . . . . . . . . . . . . .> WHERE rank_ganancia_cat <= 5
+. . . . . . . . . . . . . . . .> ORDER BY category, rank_ganancia_cat;
+SELECT
+category,
+product_id,
+MAX(product_name) AS product_name,
+ROUND(SUM(sales), 2) AS ventas,
+ROUND(SUM(profit), 2) AS ganancia,
+ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct
+FROM superstore_DEscalera
+GROUP BY category, product_id
+),
+ranked AS (
+SELECT
+category,
+product_id,
+product_name,
+ventas,
+ganancia,
+margen_pct,
+RANK() OVER (PARTITION BY category ORDER BY ganancia DESC) AS rank_ganancia_cat,
+DENSE_RANK() OVER (ORDER BY ventas DESC) AS dense_rank_ventas_global,
+RANK() OVER (PARTITION BY category ORDER BY margen_pct ASC) AS rank_peor_margen_cat,
+SUM(ganancia) OVER (PARTITION BY category ORDER BY ganancia DESC
+ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ganancia_acum_cat
+FROM prod
+)
+SELECT *
+FROM ranked
+WHERE rank_ganancia_cat <= 5
+ORDER BY category, rank_ganancia_cat
+SELECT
+category,
+product_id,
+MAX(product_name) AS product_name,
+ROUND(SUM(sales), 2) AS ventas,
+ROUND(SUM(profit), 2) AS ganancia,
+ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct
+FROM superstore_DEscalera
+GROUP BY category, product_id
+),
+ranked AS (
+SELECT
+category,
+product_id,
+product_name,
+ventas,
+ganancia,
+margen_pct,
+RANK() OVER (PARTITION BY category ORDER BY ganancia DESC) AS rank_ganancia_cat,
+DENSE_RANK() OVER (ORDER BY ventas DESC) AS dense_rank_ventas_global,
+RANK() OVER (PARTITION BY category ORDER BY margen_pct ASC) AS rank_peor_margen_cat,
+SUM(ganancia) OVER (PARTITION BY category ORDER BY ganancia DESC
+ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ganancia_acum_cat
+FROM prod
+)
+SELECT *
+FROM ranked
+WHERE rank_ganancia_cat <= 5
+ORDER BY category, rank_ganancia_cat
+SELECT......rank_ganancia_cat (Stage-1)
+ranked.category	ranked.product_id	ranked.product_name	ranked.ventas	ranked.ganancia	ranked.margen_pct	ranked.rank_ganancia_cat	ranked.dense_rank_ventas_global	ranked.rank_peor_margen_cat	ranked.ganancia_acum_cat
+Furniture	FUR-CH-10000454	Hon Deluxe Fabric Upholstered Stacking Chairs, Rounded Back	10637.53	1927.44	18.12	1	29	255	1927.44
+Furniture	FUR-CH-10004063	Global Deluxe High-Back Manager's Chair	8665.19	1558.59	17.99	2	40	254	3486.0299999999997
+Furniture	FUR-CH-10002320	Hon Pagoda Stacking Chairs	6483.8	1540.7	23.76	3	74	278	5026.73
+Furniture	FUR-CH-10004086	Hon 4070 Series Pagoda Armless Upholstered Stacking Chairs	8431.0	1388.63	16.47	4	41	238	6415.36
+Furniture	FUR-CH-10001854	Office Star - Professional Matrix Back Chair with 2-to-1 Synchro Tilt and Mesh Fabric Seat	8774.5	1305.65	14.88	5	39	223	7721.01
+Office Supplies	OFF-BI-10003527	Fellowes PB500 Electric Punch Plastic Comb Binding Machine with Manual Bind	27453.38	7753.04	28.24	1	2	530	7753.04
+Office Supplies	OFF-BI-10001120	Ibico EPK-21 Electric Binding System	15875.92	3345.28	21.07	2	13	354	11098.32
+Office Supplies	OFF-AP-10002945	Honeywell Enviracaire Portable HEPA Air Cleaner for 17' x 22' Room	11304.44	3247.02	28.72	3	24	534	14345.34
+Office Supplies	OFF-BI-10003925	Fellowes PB300 Plastic Comb Binding Machine	8070.19	2518.06	31.2	4	45	571	16863.4
+Office Supplies	OFF-BI-10004600	Ibico Ibimaster 300 Manual Binding System	7985.38	2318.34	29.03	5	47	547	19181.74
+Technology	TEC-CO-10004722	Canon imageCLASS 2200 Advanced Copier	61599.82	25199.93	40.91	1	1	380	25199.93
+Technology	TEC-CO-10001449	Hewlett Packard LaserJet 3310 Copier	18839.69	6983.88	37.07	2	7	358	32183.81
+Technology	TEC-CO-10003763	Canon PC1060 Personal Laser Copier	11619.83	4570.93	39.34	3	22	373	36754.740000000005
+Technology	TEC-AC-10002049	Plantronics Savi W720 Multi-Device Wireless Headset System	13756.54	4425.34	32.17	4	17	324	41180.08
+Technology	TEC-MA-10001127	HP Designjet T520 Inkjet Large Format Printer - 24" Color	18374.9	4094.98	22.29	5	8	262	45275.060000000005
+15 rows selected (17.324 seconds)
+. . . . . . . . . . . . . . . .>   category,
+. . . . . . . . . . . . . . . .>   product_id,
+. . . . . . . . . . . . . . . .>   product_name,
+. . . . . . . . . . . . . . . .>   ventas,
+. . . . . . . . . . . . . . . .>   ganancia,
+. . . . . . . . . . . . . . . .>   margen_pct,
+. . . . . . . . . . . . . . . .>   dense_rank_ventas_global
+. . . . . . . . . . . . . . . .> FROM (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     category,
+. . . . . . . . . . . . . . . .>     product_id,
+. . . . . . . . . . . . . . . .>     MAX(product_name) AS product_name,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(sales), 2) AS ventas,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(profit), 2) AS ganancia,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct,
+. . . . . . . . . . . . . . . .>     DENSE_RANK() OVER (ORDER BY SUM(sales) DESC) AS dense_rank_ventas_global
+. . . . . . . . . . . . . . . .>   FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .>   GROUP BY category, product_id
+. . . . . . . . . . . . . . . .> ) t
+. . . . . . . . . . . . . . . .> WHERE dense_rank_ventas_global <= 5
+. . . . . . . . . . . . . . . .> ORDER BY dense_rank_ventas_global;
+category,
+product_id,
+product_name,
+ventas,
+ganancia,
+margen_pct,
+dense_rank_ventas_global
+FROM (
+SELECT
+category,
+product_id,
+MAX(product_name) AS product_name,
+ROUND(SUM(sales), 2) AS ventas,
+ROUND(SUM(profit), 2) AS ganancia,
+ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct,
+DENSE_RANK() OVER (ORDER BY SUM(sales) DESC) AS dense_rank_ventas_global
+FROM superstore_DEscalera
+GROUP BY category, product_id
+) t
+WHERE dense_rank_ventas_global <= 5
+ORDER BY dense_rank_ventas_global
+category,
+product_id,
+product_name,
+ventas,
+ganancia,
+margen_pct,
+dense_rank_ventas_global
+FROM (
+SELECT
+category,
+product_id,
+MAX(product_name) AS product_name,
+ROUND(SUM(sales), 2) AS ventas,
+ROUND(SUM(profit), 2) AS ganancia,
+ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct,
+DENSE_RANK() OVER (ORDER BY SUM(sales) DESC) AS dense_rank_ventas_global
+FROM superstore_DEscalera
+GROUP BY category, product_id
+) t
+WHERE dense_rank_ventas_global <= 5
+ORDER BY dense_rank_ventas_global
+category,
+prod......ank_ventas_global (Stage-1)
+category	product_id	product_name	ventas	ganancia	margen_pct	dense_rank_ventas_global
+Technology	TEC-CO-10004722	Canon imageCLASS 2200 Advanced Copier	61599.82	25199.93	40.91	1
+Office Supplies	OFF-BI-10003527	Fellowes PB500 Electric Punch Plastic Comb Binding Machine with Manual Bind	27453.38	7753.04	28.24	2
+Technology	TEC-MA-10002412	Cisco TelePresence System EX90 Videoconferencing Unit	22638.48	-1811.08	-8.0	3
+Furniture	FUR-CH-10002024	HON 5400 Series Task Chairs for Big and Tall	21870.58	0.0	0.0	4
+Office Supplies	OFF-BI-10001359	GBC DocuBind TL300 Electric Binding System	19823.48	2233.51	11.27	5
+5 rows selected (12.132 seconds)
+. . . . . . . . . . . . . . . .>   category,
+. . . . . . . . . . . . . . . .>   product_id,
+. . . . . . . . . . . . . . . .>   product_name,
+. . . . . . . . . . . . . . . .>   ventas,
+. . . . . . . . . . . . . . . .>   ganancia,
+. . . . . . . . . . . . . . . .>   margen_pct,
+. . . . . . . . . . . . . . . .>   RANK() OVER (ORDER BY margen_pct ASC) AS rank_peor_margen
+. . . . . . . . . . . . . . . .> FROM (
+. . . . . . . . . . . . . . . .>   SELECT
+. . . . . . . . . . . . . . . .>     category,
+. . . . . . . . . . . . . . . .>     product_id,
+. . . . . . . . . . . . . . . .>     MAX(product_name) AS product_name,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(sales), 2) AS ventas,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(profit), 2) AS ganancia,
+. . . . . . . . . . . . . . . .>     ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct
+. . . . . . . . . . . . . . . .>   FROM superstore_DEscalera
+. . . . . . . . . . . . . . . .>   GROUP BY category, product_id
+. . . . . . . . . . . . . . . .>   HAVING SUM(sales) > 0
+. . . . . . . . . . . . . . . .> ) t
+. . . . . . . . . . . . . . . .> ORDER BY margen_pct ASC
+. . . . . . . . . . . . . . . .> LIMIT 5;
+category,
+product_id,
+product_name,
+ventas,
+ganancia,
+margen_pct,
+RANK() OVER (ORDER BY margen_pct ASC) AS rank_peor_margen
+FROM (
+SELECT
+category,
+product_id,
+MAX(product_name) AS product_name,
+ROUND(SUM(sales), 2) AS ventas,
+ROUND(SUM(profit), 2) AS ganancia,
+ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct
+FROM superstore_DEscalera
+GROUP BY category, product_id
+HAVING SUM(sales) > 0
+) t
+ORDER BY margen_pct ASC
+LIMIT 5
+category,
+product_id,
+product_name,
+ventas,
+ganancia,
+margen_pct,
+RANK() OVER (ORDER BY margen_pct ASC) AS rank_peor_margen
+FROM (
+SELECT
+category,
+product_id,
+MAX(product_name) AS product_name,
+ROUND(SUM(sales), 2) AS ventas,
+ROUND(SUM(profit), 2) AS ganancia,
+ROUND(SUM(profit) / NULLIF(SUM(sales), 0) * 100, 2) AS margen_pct
+FROM superstore_DEscalera
+GROUP BY category, product_id
+HAVING SUM(sales) > 0
+) t
+ORDER BY margen_pct ASC
+LIMIT 5
+category,
+prod......n_pct ASC
+LIMIT 5 (Stage-1)
+category	product_id	product_name	ventas	ganancia	margen_pct	rank_peor_margen
+Office Supplies	OFF-AP-10002203	Eureka Disposable Bags for Sanitaire Vibra Groomer I Upright Vac	1.62	-4.47	-275.0	1
+Furniture	FUR-BO-10001567	Bush Westfield Collection Bookcases, Dark Cherry Finish, Fully Assembled	90.88	-190.85	-210.0	2
+Office Supplies	OFF-AP-10000390	Euro Pro Shark Stick Mini Vacuum	170.74	-325.63	-190.71	3
+Technology	TEC-MA-10003337	Okidata B401 Printer	179.99	-251.99	-140.0	4
+Technology	TEC-MA-10001695	Zebra GK420t Direct Thermal/Thermal Transfer Printer	703.71	-938.28	-133.33	5
+5 rows selected (9.777 seconds)
+No such file or directory
