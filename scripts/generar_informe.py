@@ -9,7 +9,7 @@ from docx.oxml import parse_xml, OxmlElement
 
 BASE = r"d:\Tecnologias Emergentes\examenparcial2"
 EV = os.path.join(BASE, "evidencia")
-OUT = os.path.join(BASE, "Examen_Practico_Superstore_Escalera.docx")
+OUT = os.path.join(BASE, "documentacion", "Examen_Practico_Superstore_Escalera.docx")
 LOGO = os.path.join(EV, "_cover", "image1.png")
 T = "dbex_DEscalera.superstore_DEscalera"
 

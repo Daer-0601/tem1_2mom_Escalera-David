@@ -70,11 +70,9 @@ datos/                        CSV listo para Hive
 sql/                          DDL/DML + consultas P1..P8
 scripts/                      preparación y ejecución
 evidencia/                    salidas Beeline + capturas
-documentacion/                optimización, conclusiones, resultados
+documentacion/                resultados, optimización, conclusiones, informe Word
 diccionario_datos.md
-Defensa.md
 README.md
-Examen_Practico_Superstore_Escalera.docx
 ```
 
 ## Base y tabla
@@ -103,4 +101,4 @@ Examen_Practico_Superstore_Escalera.docx
 - Pareto ventas: ~**414 / 1862** productos (~22%) concentran el 80% de ventas.
 - Pareto ganancia (profit > 0): ~**340 / 1558** (~22%).
 
-Detalle e interpretación: `documentacion/resultados.md` y el informe Word `Examen_Practico_Superstore_Escalera.docx`.
+Detalle e interpretación: `documentacion/resultados.md` y el informe Word `documentacion/Examen_Practico_Superstore_Escalera.docx`.
