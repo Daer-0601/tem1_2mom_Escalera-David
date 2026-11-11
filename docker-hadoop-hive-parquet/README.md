@@ -1,7 +1,5 @@
 # Stack Hadoop + Hive (incluido en el examen)
 
-Basado en el entorno de las prácticas (`tech4242/docker-hadoop-hive-parquet`).
-
 ## Servicios
 
 | Servicio | Puerto |
@@ -12,7 +10,8 @@ Basado en el entorno de las prácticas (`tech4242/docker-hadoop-hive-parquet`).
 | Hive Metastore | 9083 |
 | HiveServer2 | 10000 |
 | Hive UI | 10002 |
-| Hue (opcional) | 8888 |
+
+Solo hace falta Docker Desktop. No depende de otra carpeta externa.
 
 ## Uso
 

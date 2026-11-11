@@ -4,9 +4,12 @@ import csv
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parents[1]
-SRC = BASE / "datos_tmp" / "Sample - Superstore.csv"
-if not SRC.exists():
-    SRC = BASE / "Sample - Superstore.csv"
+# Busca el CSV original en la raiz o en datos/
+CANDIDATES = [
+    BASE / "Sample - Superstore.csv",
+    BASE / "datos" / "Sample - Superstore.csv",
+]
+SRC = next((p for p in CANDIDATES if p.exists()), CANDIDATES[0])
 OUT = BASE / "datos" / "superstore_DEscalera.csv"
 
 MAPPING = [
