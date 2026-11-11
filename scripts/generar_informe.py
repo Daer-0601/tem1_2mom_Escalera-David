@@ -10,7 +10,7 @@ from docx.oxml import parse_xml, OxmlElement
 BASE = r"d:\Tecnologias Emergentes\examenparcial2"
 EV = os.path.join(BASE, "evidencia")
 OUT = os.path.join(BASE, "Examen_Practico_Superstore_Escalera.docx")
-LOGO = r"d:\Tecnologias Emergentes\h\evidencia\_cover\word\media\image1.png"
+LOGO = os.path.join(EV, "_cover", "image1.png")
 T = "dbex_DEscalera.superstore_DEscalera"
 
 doc = Document()
@@ -154,7 +154,7 @@ doc.add_page_break()
 
 titulo("1. Entorno y dataset")
 cuerpo(
-    "Trabajé con el mismo stack Docker de las prácticas (docker-hadoop-hive-parquet): Hadoop 3.4.1 y Hive 4.0.1. "
+    "El entorno Docker está dentro del propio repo, en docker-hadoop-hive-parquet: Hadoop 3.4.1 y Hive 4.0.1. "
     "En Hive 4 se consulta con Beeline, no con el CLI viejo. NameNode en 9870, HiveServer2 en 10000."
 )
 cuerpo(

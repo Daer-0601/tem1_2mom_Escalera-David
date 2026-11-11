@@ -18,7 +18,7 @@ Cosas que fui probando / dejando anotadas mientras armaba las consultas:
    Si meto productos con pérdida en el acumulado de ganancias, el 80% se distorsiona. Para ventas sí uso todos.
 
 6. **Entorno**  
-   Mismo stack que en las prácticas: `docker-hadoop-hive-parquet` (Hive 4 + Beeline). NameNode en 9870, HiveServer2 en 10000.
+   El stack vive en el repo (`docker-hadoop-hive-parquet/`): Hive 4 + Beeline. NameNode en 9870, HiveServer2 en 10000.
 
 7. **Si se agranda el dataset**  
    Particionar por `region` o por año (`anio` derivado) y guardar en Parquet ayudaría. Con 10k filas no hace falta.

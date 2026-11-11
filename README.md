@@ -12,7 +12,7 @@ Procesar el CSV de Superstore en Hive, armar un modelo usable y responder las 8 
 ## Requisitos
 
 - Docker Desktop
-- Stack usado en las prácticas: `D:\Tecnologias Emergentes\h\docker-hadoop-hive-parquet`
+- El stack Hadoop/Hive **ya viene en este repo**: `docker-hadoop-hive-parquet/`
   - Hadoop 3.4.1 + Hive 4.0.1 (Beeline)
   - NameNode: http://127.0.0.1:9870
   - HiveServer2: puerto 10000
@@ -20,7 +20,6 @@ Procesar el CSV de Superstore en Hive, armar un modelo usable y responder las 8 
 ## Dataset
 
 - Origen: https://www.kaggle.com/datasets/vivek468/superstore-dataset-final
-- Archivo local original: `Sample - Superstore.csv.zip`
 - Archivo cargado a Hive: `datos/superstore_DEscalera.csv` (separador `|`, UTF-8)
 
 Para regenerar el CSV limpio:
@@ -31,17 +30,23 @@ python scripts\preparar_csv.py
 
 ## Cómo ejecutar
 
-1. Levantar el stack (desde la carpeta del docker de las prácticas):
+1. Levantar el stack (incluido en el repo):
 
 ```powershell
-cd "D:\Tecnologias Emergentes\h\docker-hadoop-hive-parquet"
+cd docker-hadoop-hive-parquet
 docker compose up -d
 ```
 
-2. Cargar y correr las consultas del examen:
+Esperar a que `hive-server` quede healthy:
 
 ```powershell
-cd "D:\Tecnologias Emergentes\examenparcial2"
+docker compose ps
+```
+
+2. Cargar y correr las consultas del examen (desde la raíz del repo):
+
+```powershell
+cd ..
 .\scripts\cargar_y_ejecutar.ps1
 ```
 
@@ -60,14 +65,16 @@ SELECT COUNT(*) FROM superstore_DEscalera;
 ## Estructura del repo
 
 ```
-datos/                  CSV listo para Hive
-sql/                    DDL/DML + consultas P1..P8
-scripts/                preparación y ejecución
-evidencia/              salidas Beeline + JSON de apoyo
-documentacion/          optimización, conclusiones, resultados
+docker-hadoop-hive-parquet/   stack Docker (Hadoop + Hive 4)
+datos/                        CSV listo para Hive
+sql/                          DDL/DML + consultas P1..P8
+scripts/                      preparación y ejecución
+evidencia/                    salidas Beeline + capturas
+documentacion/                optimización, conclusiones, resultados
 diccionario_datos.md
 Defensa.md
 README.md
+Examen_Practico_Superstore_Escalera.docx
 ```
 
 ## Base y tabla

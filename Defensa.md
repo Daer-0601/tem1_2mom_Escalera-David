@@ -3,11 +3,17 @@
 ## Antes
 
 1. Docker Desktop prendido.
-2. Stack:
+2. Stack (está dentro del repo):
 
 ```powershell
-cd "D:\Tecnologias Emergentes\h\docker-hadoop-hive-parquet"
+cd docker-hadoop-hive-parquet
 docker compose ps
+```
+
+Si no está arriba:
+
+```powershell
+docker compose up -d
 ```
 
 3. Beeline:
@@ -45,4 +51,5 @@ Región / RFM / descuentos / Pareto: los scripts están en `sql/03` … `sql/08`
 
 ## Si preguntan del entorno
 
-Mismo repo Docker de las labs: `tech4242/docker-hadoop-hive-parquet` (carpeta local `h\docker-hadoop-hive-parquet`). Hive 4 = Beeline.
+El stack va en `docker-hadoop-hive-parquet/` (Hadoop 3.4.1 + Hive 4.0.1).  
+Hive 4 se consulta con Beeline. NameNode web: 9870. HiveServer2: 10000.
